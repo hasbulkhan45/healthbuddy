@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   Search,
@@ -10,6 +11,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,11 +25,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DemoModeBadge } from "@/components/shared/demo-mode-badge";
 import { NotificationDropdown } from "@/components/layout/notification-dropdown";
 import { CommandPalette } from "@/components/layout/command-palette";
-import { mockUser } from "@/data/mock/users";
 
 export function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Demo user for unauthenticated access
+  const demoUser = {
+    user_metadata: {
+      full_name: "Demo User",
+      avatar_url: null,
+      picture: null,
+    },
+    email: "demo@healthbuddy.app",
+  };
 
   const navLinks = [
     { label: "Home", href: "/home" },
@@ -44,6 +56,18 @@ export function AppHeader() {
     }
     return pathname.startsWith(href);
   };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Use demo user for unauthenticated access
+  const user = demoUser;
 
   return (
     <>
@@ -107,14 +131,14 @@ export function AppHeader() {
 
             <NotificationDropdown />
 
-            {/* User Profile Menu */}
+            {/* User Profile Menu - Demo Mode */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                   <Avatar className="h-8 w-8 border-2 border-indigo-100 shadow-2xs ring-1 ring-blue-500/20">
-                    <AvatarImage src={mockUser.avatarUrl} alt={mockUser.fullName} />
+                    <AvatarImage src={user.user_metadata?.avatar_url ?? user.user_metadata?.picture} alt={user.user_metadata?.full_name ?? user.email ?? 'User'} />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs font-bold">
-                      AM
+                      {getInitials(user.user_metadata?.full_name ?? user.email ?? 'User')}
                     </AvatarFallback>
                   </Avatar>
                 </button>
@@ -123,11 +147,12 @@ export function AppHeader() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-0.5">
                     <p className="text-xs font-semibold text-slate-900">
-                      {mockUser.fullName}
+                      {user.user_metadata?.full_name ?? 'User'}
                     </p>
                     <p className="text-[11px] text-slate-500 truncate">
-                      {mockUser.email}
+                      {user.email}
                     </p>
+                    <p className="text-[10px] text-blue-600 font-medium">Demo Mode</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -148,10 +173,6 @@ export function AppHeader() {
                     <Sparkles className="mr-2 h-3.5 w-3.5 text-purple-600" />
                     <span>Doctor Visit Summary</span>
                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-slate-400 text-[11px]" disabled>
-                  <span>HealthBuddy v1.0 • Demo User</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

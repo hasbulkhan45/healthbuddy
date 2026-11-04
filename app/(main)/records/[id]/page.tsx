@@ -24,7 +24,6 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { reportsService } from "@/services/reportsService";
 import { MedicalRecord, ExtractedLabResult } from "@/types/report";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
 
 interface RecordDetailPageProps {
   params: Promise<{ id: string }>;
@@ -33,34 +32,28 @@ interface RecordDetailPageProps {
 export default function RecordDetailPage({ params }: RecordDetailPageProps) {
   const router = useRouter();
   const { id } = use(params);
-  const { user } = useAuth();
+  const demoUserId = "demo-user-001";
 
   const [record, setRecord] = useState<MedicalRecord | null>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [loading, setLoading] = useState(true);
 
   const loadRecord = () => {
-    if (user) {
-      reportsService.getReportById(id, user.id).then((rec) => {
-        if (rec) setRecord({ ...rec });
-        setLoading(false);
-      });
-    } else {
+    reportsService.getReportById(id, demoUserId).then((rec) => {
+      if (rec) setRecord({ ...rec });
       setLoading(false);
-    }
+    });
   };
 
   useEffect(() => {
     loadRecord();
     const unsub = reportsService.subscribe(loadRecord);
     return () => { unsub(); };
-  }, [id, user]);
+  }, [id]);
 
   const handleConfirmResult = async (resultId: string) => {
-    if (user) {
-      await reportsService.confirmResult(id, resultId, user.id);
-      toast.success("Lab measurement verified by user.");
-    }
+    await reportsService.confirmResult(id, resultId, demoUserId);
+    toast.success("Lab measurement verified by user.");
   };
 
   if (loading) {

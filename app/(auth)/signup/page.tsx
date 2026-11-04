@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from "lucide-react";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/home";
@@ -183,7 +183,7 @@ export default function SignupPage() {
 
           <p className="mt-6 text-center text-sm text-slate-600">
             Already have an account?{" "}
-            <Link href="/login?redirect=" + {redirectTo} className="font-semibold text-blue-600 hover:underline">
+            <Link href={`/login?redirect=${redirectTo}`} className="font-semibold text-blue-600 hover:underline">
               Sign in
             </Link>
           </p>

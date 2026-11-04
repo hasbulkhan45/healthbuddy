@@ -34,7 +34,6 @@ import { Label } from "@/components/ui/label";
 import { reportsService } from "@/services/reportsService";
 import { MedicalRecord, DocumentCategory } from "@/types/report";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
 
 const categoryStyles: Record<string, { icon: React.ComponentType<{ className?: string }>; gradient: string; badgeBg: string; borderHover: string; bgClass: string }> = {
   lab_report: { icon: FileText, gradient: "from-blue-500 to-indigo-600", badgeBg: "bg-blue-50 text-blue-700 border-blue-200", borderHover: "hover:border-blue-300", bgClass: "card-vibrant-blue" },
@@ -46,7 +45,9 @@ const categoryStyles: Record<string, { icon: React.ComponentType<{ className?: s
 };
 
 export default function RecordsPage() {
-  const { user, loading } = useAuth();
+  // Demo user ID for unauthenticated access
+  const demoUserId = "demo-user-001";
+
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,17 +59,15 @@ export default function RecordsPage() {
   const [progress, setProgress] = useState(0);
 
   const loadRecords = async () => {
-    if (user) {
-      const data = await reportsService.getReports(selectedCategory as DocumentCategory, user.id);
-      setRecords(data);
-    }
+    const data = await reportsService.getReports(selectedCategory as DocumentCategory, demoUserId);
+    setRecords(data);
   };
 
   useEffect(() => {
     loadRecords();
     const unsub = reportsService.subscribe(loadRecords);
     return () => { unsub(); };
-  }, [selectedCategory, user]);
+  }, [selectedCategory]);
 
   const filteredRecords = records.filter(
     (r) =>
@@ -80,10 +79,6 @@ export default function RecordsPage() {
   const handleUploadSubmit = async () => {
     if (!reportTitle) {
       toast.error("Please enter a document title");
-      return;
-    }
-    if (!user) {
-      toast.error("Please sign in to upload documents");
       return;
     }
     setIsUploading(true);
@@ -107,7 +102,7 @@ export default function RecordsPage() {
           institutionName: institution || "Metropolitan Clinical Laboratories",
           documentDate: new Date().toISOString().split("T")[0],
         },
-        user.id
+        demoUserId
       );
       setProgress(100);
       setIsUploading(false);
