@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import {
   Sparkles,
   Send,
@@ -16,6 +15,10 @@ import {
   ArrowRight,
   Info,
   BookOpen,
+  Paperclip,
+  X,
+  FileText,
+  Image,
 } from "lucide-react";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -34,12 +37,14 @@ import { toast } from "sonner";
 
 export default function AIBuddyPage() {
   const [conversations, setConversations] = useState<AIConversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string>("conv_001");
+  const [activeConversationId, setActiveConversationId] = useState<string>("");
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [contextModalOpen, setContextModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
 
   const [contextSelection, setContextSelection] = useState<AIContextSelection>({
     medicalReports: true,
@@ -51,13 +56,20 @@ export default function AIBuddyPage() {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadConversations = () => {
     aiService.getConversations().then((convs) => {
       setConversations(convs);
-      const active = convs.find((c) => c.id === activeConversationId) || convs[0];
-      if (active) {
-        setMessages([...active.messages]);
+      if (convs.length > 0) {
+        const active = convs.find((c) => c.id === activeConversationId) || convs[0];
+        if (active) {
+          setActiveConversationId(active.id);
+          setMessages([...active.messages]);
+        }
+      } else {
+        setActiveConversationId("");
+        setMessages([]);
       }
     });
   };
@@ -66,27 +78,66 @@ export default function AIBuddyPage() {
     loadConversations();
     const unsub = aiService.subscribe(loadConversations);
     return unsub;
-  }, [activeConversationId]);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  const handleFileSelect = (files: FileList) => {
+    const newFiles = Array.from(files);
+    const validFiles = newFiles.filter((file) => {
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'text/plain'];
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      return validTypes.includes(file.type) && file.size <= maxSize;
+    });
+    setAttachments((prev) => [...prev, ...validFiles].slice(0, 5)); // Max 5 files
+    setShowAttachmentPreview(true);
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAttachments = () => {
+    setAttachments([]);
+    setShowAttachmentPreview(false);
+  };
+
   const handleSendMessage = async (customPrompt?: string) => {
     const textToSend = customPrompt || inputText;
-    if (!textToSend.trim() || isTyping) return;
+    if (!textToSend.trim() && attachments.length === 0) return;
+    if (isTyping) return;
 
+    // Check if there's an active conversation, if not create one
+    if (!activeConversationId) {
+      const newId = `conv_${Date.now()}`;
+      setActiveConversationId(newId);
+    }
+
+    const messageText = textToSend;
+    const currentAttachments = [...attachments];
     setInputText("");
+    setAttachments([]);
+    setShowAttachmentPreview(false);
     setIsTyping(true);
 
     try {
+      // Add user message with attachment info
+      const userMessageContent = messageText + (currentAttachments.length > 0
+        ? `\n\n[Attached ${currentAttachments.length} file(s): ${currentAttachments.map(f => f.name).join(', ')}]`
+        : '');
+
       await aiService.sendMessage({
         conversationId: activeConversationId,
-        message: textToSend,
+        message: userMessageContent,
         selectedContext: contextSelection,
       });
-    } catch {
-      toast.error("Failed to generate response");
+      // Reload conversations to get the new message
+      loadConversations();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate response";
+      toast.error(errorMessage);
     } finally {
       setIsTyping(false);
     }
@@ -96,6 +147,8 @@ export default function AIBuddyPage() {
     const newId = `conv_${Date.now()}`;
     setActiveConversationId(newId);
     setMessages([]);
+    setAttachments([]);
+    setShowAttachmentPreview(false);
     toast.success("New conversation started.");
   };
 
@@ -213,7 +266,7 @@ export default function AIBuddyPage() {
 
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>Simulated Engine</span>
+              <span>Connected</span>
             </div>
           </div>
 
@@ -338,6 +391,48 @@ export default function AIBuddyPage() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Attachment Preview */}
+          {showAttachmentPreview && attachments.length > 0 && (
+            <div className="px-3 pb-2 border-t border-slate-100 bg-white">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <Paperclip className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-medium text-slate-600">Attachments ({attachments.length}/5)</span>
+                <button
+                  onClick={handleClearAttachments}
+                  className="ml-auto text-xs text-slate-400 hover:text-slate-600"
+                >
+                  Clear all
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {attachments.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg"
+                  >
+                    {file.type.startsWith('image/') ? (
+                      <Image className="h-4 w-4 text-slate-500" />
+                    ) : file.type === 'application/pdf' ? (
+                      <FileText className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <FileText className="h-4 w-4 text-slate-500" />
+                    )}
+                    <span className="text-xs text-slate-700 truncate max-w-[150px]">{file.name}</span>
+                    <span className="text-[10px] text-slate-400">
+                      {(file.size / 1024).toFixed(1)} KB
+                    </span>
+                    <button
+                      onClick={() => handleRemoveAttachment(index)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Input Bar */}
           <div className="p-3 border-t border-slate-100 bg-white">
             <form
@@ -347,16 +442,37 @@ export default function AIBuddyPage() {
               }}
               className="flex items-center gap-2"
             >
-              <Input
-                placeholder="Ask about your test results, medicines, or doctor visit..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                disabled={isTyping}
-                className="flex-1 text-xs h-10"
-              />
+              <div className="flex-1 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isTyping || attachments.length >= 5}
+                  className="h-10 w-10 text-slate-500 hover:text-teal-600 hover:bg-teal-50"
+                  title="Attach files (PDF, images, text)"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.txt"
+                  onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                  className="hidden"
+                />
+                <Input
+                  placeholder={attachments.length > 0 ? "Add a message (optional)..." : "Ask about your test results, medicines, or doctor visit..."}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  disabled={isTyping}
+                  className="flex-1 text-xs h-10"
+                />
+              </div>
               <Button
                 type="submit"
-                disabled={!inputText.trim() || isTyping}
+                disabled={(!inputText.trim() && attachments.length === 0) || isTyping}
                 className="h-10 px-4 gap-1.5 badge-gradient-blue-indigo"
               >
                 <Send className="h-3.5 w-3.5" />
