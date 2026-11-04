@@ -133,26 +133,27 @@ export default function CarePage() {
     <PageShell
       title="Care Management Hub"
       description="Track upcoming appointments, daily medication schedules, preventive screenings, and clinical tasks."
+      headerBg="gradient"
       action={
-        <Button onClick={() => setAddAppointmentOpen(true)} className="gap-1.5">
+        <Button onClick={() => setAddAppointmentOpen(true)} className="gap-1.5 badge-gradient-blue-indigo">
           <Plus className="h-4 w-4" />
           <span>Add Appointment</span>
         </Button>
       }
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1">
-          <TabsTrigger value="overview">Care Overview</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments ({appointments.length})</TabsTrigger>
-          <TabsTrigger value="medications">Medication Reminders</TabsTrigger>
-          <TabsTrigger value="preventive">Preventive Care</TabsTrigger>
-          <TabsTrigger value="followups">Follow-up Tasks</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="px-3 py-1.5">Care Overview</TabsTrigger>
+          <TabsTrigger value="appointments" className="px-3 py-1.5">Appointments ({appointments.length})</TabsTrigger>
+          <TabsTrigger value="medications" className="px-3 py-1.5">Medication Reminders</TabsTrigger>
+          <TabsTrigger value="preventive" className="px-3 py-1.5">Preventive Care</TabsTrigger>
+          <TabsTrigger value="followups" className="px-3 py-1.5">Follow-up Tasks</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Overview */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-1">
+            <div className="rounded-xl border border-slate-200/80 card-vibrant-blue p-4 shadow-xs space-y-1">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Next Appointment
               </span>
@@ -163,7 +164,7 @@ export default function CarePage() {
                 {appointments[0]?.date} • {appointments[0]?.time}
               </p>
             </div>
-            <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-1">
+            <div className="rounded-xl border border-slate-200/80 card-vibrant-teal p-4 shadow-xs space-y-1">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Pending Today
               </span>
@@ -174,7 +175,7 @@ export default function CarePage() {
                 Morning doses scheduled
               </p>
             </div>
-            <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-1">
+            <div className="rounded-xl border border-slate-200/80 card-vibrant-emerald p-4 shadow-xs space-y-1">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Preventive Health
               </span>
@@ -188,7 +189,7 @@ export default function CarePage() {
           </div>
 
           {/* Appointments Preview */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-indigo p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">
                 Upcoming Doctor Consultations
@@ -238,7 +239,7 @@ export default function CarePage() {
             {appointments.map((apt) => (
               <div
                 key={apt.id}
-                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 flex flex-col justify-between"
+                className="rounded-xl border border-slate-200/80 card-vibrant-blue p-5 shadow-xs space-y-3 flex flex-col justify-between hover:border-blue-300 transition-colors"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between">
@@ -256,7 +257,7 @@ export default function CarePage() {
 
                   <div className="space-y-1 text-xs text-slate-600">
                     <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-3.5 w-3.5 text-teal-700" />
+                      <CalendarIcon className="h-3.5 w-3.5 text-blue-700" />
                       <span className="font-mono">{apt.date} at {apt.time}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -293,13 +294,13 @@ export default function CarePage() {
 
         {/* Tab 3: Medication Reminders */}
         <TabsContent value="medications" className="space-y-4">
-          <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+          <div className="border border-slate-200/80 rounded-xl card-vibrant-teal overflow-hidden shadow-xs divide-y divide-slate-100">
             {reminders.map((rem) => {
               const isCompleted = rem.status === "completed";
               return (
                 <div
                   key={rem.id}
-                  className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                  className="p-4 flex items-center justify-between hover:bg-teal-50/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <button
@@ -335,6 +336,7 @@ export default function CarePage() {
                       size="sm"
                       variant={isCompleted ? "outline" : "default"}
                       onClick={() => handleToggleReminder(rem.id, rem.status)}
+                      className={isCompleted ? "" : "badge-gradient-teal-cyan"}
                     >
                       {isCompleted ? "Mark Pending" : "Mark Taken"}
                     </Button>
@@ -351,10 +353,10 @@ export default function CarePage() {
             {preventiveItems.map((item) => (
               <div
                 key={item.id}
-                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-2.5"
+                className="rounded-xl border border-slate-200/80 card-vibrant-emerald p-5 shadow-xs space-y-2.5 hover:border-emerald-300 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                     {item.category}
                   </span>
                   <StatusBadge
@@ -382,18 +384,18 @@ export default function CarePage() {
             <span className="text-xs font-semibold text-slate-600">
               Personal Healthcare Action Items
             </span>
-            <Button size="sm" onClick={() => setAddTaskOpen(true)} className="gap-1.5">
+            <Button size="sm" onClick={() => setAddTaskOpen(true)} className="gap-1.5 badge-gradient-indigo-purple">
               <Plus className="h-3.5 w-3.5" />
               <span>Add Task</span>
             </Button>
           </div>
 
-          <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+          <div className="border border-slate-200/80 rounded-xl card-vibrant-indigo overflow-hidden shadow-xs divide-y divide-slate-100">
             {tasks.map((task) => (
               <div
                 key={task.id}
                 onClick={() => handleToggleTask(task.id)}
-                className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer"
+                className="p-3.5 flex items-center justify-between hover:bg-indigo-50/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   {task.isCompleted ? (
@@ -487,7 +489,9 @@ export default function CarePage() {
             <Button variant="outline" onClick={() => setAddAppointmentOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateAppointment}>Save Appointment</Button>
+            <Button onClick={handleCreateAppointment} className="badge-gradient-blue-indigo">
+              Save Appointment
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -523,11 +527,12 @@ export default function CarePage() {
             <Button variant="outline" onClick={() => setAddTaskOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateTask}>Save Task</Button>
+            <Button onClick={handleCreateTask} className="badge-gradient-indigo-purple">
+              Save Task
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </PageShell>
   );
 }
-

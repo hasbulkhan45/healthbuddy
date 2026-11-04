@@ -30,7 +30,7 @@ export function StatusBadge({
 }: StatusBadgeProps) {
   const normalized = status.toLowerCase().replace(/[\s-]/g, "_");
 
-  let styles = "bg-slate-50 text-slate-700 border-slate-200";
+  let styles = "status-not-assessed";
   let dotColor = "bg-slate-400";
   let defaultLabel = "Standard";
 
@@ -38,7 +38,7 @@ export function StatusBadge({
     case "normal":
     case "optimal":
     case "completed":
-      styles = "bg-emerald-50/90 text-emerald-800 border-emerald-200/90 shadow-2xs";
+      styles = "status-normal";
       dotColor = "bg-emerald-500";
       defaultLabel = "Normal";
       break;
@@ -47,13 +47,13 @@ export function StatusBadge({
     case "attention":
     case "follow_up_recommended":
     case "more_information_required":
-      styles = "bg-amber-50/90 text-amber-900 border-amber-200/90 shadow-2xs";
+      styles = "status-borderline";
       dotColor = "bg-amber-500";
       defaultLabel = "Attention";
       break;
 
     case "upcoming":
-      styles = "bg-blue-50/90 text-blue-900 border-blue-200/90 shadow-2xs";
+      styles = "status-upcoming";
       dotColor = "bg-blue-500";
       defaultLabel = "Upcoming";
       break;
@@ -63,20 +63,20 @@ export function StatusBadge({
     case "low":
     case "critical":
     case "risk_factors_identified":
-      styles = "bg-rose-50/90 text-rose-900 border-rose-200/90 shadow-2xs";
+      styles = "status-critical";
       dotColor = "bg-rose-500";
       defaultLabel = "Out of Range";
       break;
 
     case "not_assessed":
-      styles = "bg-slate-50 text-slate-600 border-slate-200";
+      styles = "status-not-assessed";
       dotColor = "bg-slate-400";
       defaultLabel = "Not Assessed";
       break;
 
     case "pending":
     case "assessment_available":
-      styles = "bg-cyan-50/90 text-cyan-900 border-cyan-200/90 shadow-2xs";
+      styles = "status-pending";
       dotColor = "bg-cyan-500";
       defaultLabel = "Available";
       break;
@@ -87,7 +87,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border font-semibold select-none tracking-tight",
+        "inline-flex items-center gap-1.5 rounded-full border font-semibold select-none tracking-tight shadow-2xs",
         size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
         styles,
         className

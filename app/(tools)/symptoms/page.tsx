@@ -80,13 +80,32 @@ export default function SymptomsPage() {
     }
   };
 
+  const getSeverityStyle = (severity: number) => {
+    if (severity >= 7) return { bg: "bg-rose-100", text: "text-rose-800", border: "border-rose-200" };
+    if (severity >= 4) return { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200" };
+    return { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" };
+  };
+
+  const getSeverityStatus = (severity: number) => {
+    if (severity >= 7) return "critical";
+    if (severity >= 4) return "borderline";
+    return "normal";
+  };
+
+  const getSeverityLabel = (severity: number) => {
+    if (severity >= 7) return "Severe";
+    if (severity >= 4) return "Moderate";
+    return "Mild";
+  };
+
   return (
     <PageShell
       title="Symptoms Journal & Timeline"
       description="Record symptom episodes, severity ratings (1 to 10), and potential environmental or dietary triggers."
       breadcrumbs={[{ label: "Symptoms Journal" }]}
+      headerBg="gradient"
       action={
-        <Button onClick={() => setModalOpen(true)} className="gap-1.5">
+        <Button onClick={() => setModalOpen(true)} className="gap-1.5 badge-gradient-rose-pink">
           <Plus className="h-4 w-4" />
           <span>Log Symptom</span>
         </Button>
@@ -114,53 +133,48 @@ export default function SymptomsPage() {
           </div>
 
           <div className="space-y-3">
-            {symptoms.map((sym) => (
-              <div
-                key={sym.id}
-                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-slate-900">
-                        {sym.symptomName}
-                      </h4>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          sym.severity >= 7
-                            ? "bg-rose-100 text-rose-800"
-                            : sym.severity >= 4
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        Severity {sym.severity} / 10
+            {symptoms.map((sym) => {
+              const severityStyle = getSeverityStyle(sym.severity);
+              return (
+                <div
+                  key={sym.id}
+                  className="rounded-xl border border-slate-200/80 card-vibrant-rose p-5 shadow-xs space-y-3 hover:border-rose-300 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-slate-900">
+                          {sym.symptomName}
+                        </h4>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${severityStyle.bg} ${severityStyle.text} ${severityStyle.border}`}>
+                          Severity {sym.severity} / 10
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        Recorded on {sym.startDate} • {sym.duration}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      Recorded on {sym.startDate} • {sym.duration}
-                    </span>
+
+                    <StatusBadge
+                      status={getSeverityStatus(sym.severity)}
+                      customLabel={getSeverityLabel(sym.severity)}
+                      size="sm"
+                    />
                   </div>
 
-                  <StatusBadge
-                    status={sym.severity >= 7 ? "critical" : sym.severity >= 4 ? "borderline" : "normal"}
-                    customLabel={sym.severity >= 7 ? "Severe" : sym.severity >= 4 ? "Moderate" : "Mild"}
-                    size="sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <div>
-                    <span className="font-semibold text-slate-700 block">User-Entered Triggers:</span>
-                    <span className="text-slate-600">{sym.possibleTriggers}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-700 block">Outcome / Resolution:</span>
-                    <span className="text-slate-600">{sym.notes || "Recorded in timeline"}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div>
+                      <span className="font-semibold text-slate-700 block">User-Entered Triggers:</span>
+                      <span className="text-slate-600">{sym.possibleTriggers}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-700 block">Outcome / Resolution:</span>
+                      <span className="text-slate-600">{sym.notes || "Recorded in timeline"}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -227,11 +241,10 @@ export default function SymptomsPage() {
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveSymptom}>Save Symptom</Button>
+            <Button onClick={handleSaveSymptom} className="badge-gradient-rose-pink">Save Symptom</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </PageShell>
   );
 }
-

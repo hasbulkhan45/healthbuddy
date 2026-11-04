@@ -31,6 +31,14 @@ import { healthService } from "@/services/healthService";
 import { HealthMeasurement } from "@/types/health";
 import { toast } from "sonner";
 
+const metricStyles: Record<string, { icon: React.ComponentType<{ className?: string }>; gradient: string; cardClass: string; iconBadge: string; textColor: string; badgeColor: string }> = {
+  blood_pressure: { icon: Activity, gradient: "from-blue-500 to-cyan-500", cardClass: "card-metric-bp", iconBadge: "badge-metric-bp", textColor: "text-blue-800", badgeColor: "text-blue-700" },
+  heart_rate: { icon: Heart, gradient: "from-rose-500 to-pink-500", cardClass: "card-metric-hr", iconBadge: "badge-metric-hr", textColor: "text-rose-800", badgeColor: "text-rose-700" },
+  blood_glucose: { icon: Droplets, gradient: "from-amber-500 to-orange-500", cardClass: "card-metric-glucose", iconBadge: "badge-metric-glucose", textColor: "text-amber-800", badgeColor: "text-amber-700" },
+  weight: { icon: Scale, gradient: "from-teal-500 to-emerald-500", cardClass: "card-metric-weight", iconBadge: "badge-metric-weight", textColor: "text-teal-800", badgeColor: "text-teal-700" },
+  spo2: { icon: Wind, gradient: "from-cyan-500 to-sky-500", cardClass: "card-metric-spo2", iconBadge: "badge-metric-spo2", textColor: "text-cyan-800", badgeColor: "text-cyan-700" },
+};
+
 export default function HealthOverviewPage() {
   const [measurements, setMeasurements] = useState<HealthMeasurement[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -99,8 +107,9 @@ export default function HealthOverviewPage() {
       title="Health Overview & Vitals Log"
       description="Comprehensive vital measurements, historical records, and clinical baseline tracking."
       breadcrumbs={[{ label: "Health Overview" }]}
+      headerBg="gradient"
       action={
-        <Button onClick={() => setModalOpen(true)} className="gap-1.5">
+        <Button onClick={() => setModalOpen(true)} className="gap-1.5 badge-gradient-blue-indigo">
           <Plus className="h-4 w-4" />
           <span>Add Measurement</span>
         </Button>
@@ -109,41 +118,45 @@ export default function HealthOverviewPage() {
       <div className="space-y-6">
         {/* Vitals Summary Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {measurements.map((m) => (
-            <div
-              key={m.id}
-              className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  {m.metricType.replace(/_/g, " ")}
-                </span>
-                <StatusBadge status={m.status} customLabel={m.statusLabel} size="sm" />
-              </div>
+          {measurements.map((m) => {
+            const styles = metricStyles[m.metricType] || metricStyles.blood_pressure;
+            const Icon = styles.icon;
+            return (
+              <div
+                key={m.id}
+                className={`rounded-xl border border-slate-200/80 ${styles.cardClass} p-5 shadow-xs space-y-3 hover:-translate-y-0.5 hover:shadow-md transition-all`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    {m.metricType.replace(/_/g, " ")}
+                  </span>
+                  <StatusBadge status={m.status} customLabel={m.statusLabel} size="sm" />
+                </div>
 
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-extrabold font-mono text-slate-900">
-                  {m.formattedValue}
-                </span>
-                <span className="text-xs font-semibold text-slate-500">{m.unit}</span>
-              </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className={`text-3xl font-extrabold font-mono ${styles.textColor}`}>
+                    {m.formattedValue}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">{m.unit}</span>
+                </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Ref: {m.referenceRange || "Standard"}</span>
-                <button
-                  onClick={() => handleDelete(m.id)}
-                  className="hover:text-rose-600 transition-colors"
-                  title="Delete entry"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Ref: {m.referenceRange || "Standard"}</span>
+                  <button
+                    onClick={() => handleDelete(m.id)}
+                    className="hover:text-rose-600 transition-colors"
+                    title="Delete entry"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Detailed History Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
+        <div className="rounded-2xl border border-slate-200/80 card-vibrant-blue overflow-hidden shadow-xs">
           <div className="p-4 border-b border-slate-100 flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-900">
               Measurement History Log
@@ -167,33 +180,44 @@ export default function HealthOverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {measurements.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-2.5 px-4 font-bold text-slate-900 uppercase text-[11px]">
-                      {m.metricType.replace(/_/g, " ")}
-                    </td>
-                    <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
-                      {m.formattedValue} {m.unit}
-                    </td>
-                    <td className="py-2.5 px-4">
-                      <StatusBadge status={m.status} customLabel={m.statusLabel} size="sm" />
-                    </td>
-                    <td className="py-2.5 px-4 text-slate-500 font-mono text-[11px]">
-                      {m.recordedAt.split("T")[0]}
-                    </td>
-                    <td className="py-2.5 px-4 text-slate-500">{m.source}</td>
-                    <td className="py-2.5 px-4 text-slate-500 truncate max-w-xs">{m.notes || "—"}</td>
-                    <td className="py-2.5 px-4 text-right">
-                      <button
-                        onClick={() => handleDelete(m.id)}
-                        className="text-slate-400 hover:text-rose-600 transition-colors p-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {measurements.map((m) => {
+                  const styles = metricStyles[m.metricType] || metricStyles.blood_pressure;
+                  const Icon = styles.icon;
+                  return (
+                    <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${styles.iconBadge} text-white`}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <span className={`font-bold ${styles.textColor} uppercase text-[11px]`}>
+                            {m.metricType.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
+                        {m.formattedValue} {m.unit}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <StatusBadge status={m.status} customLabel={m.statusLabel} size="sm" />
+                      </td>
+                      <td className="py-2.5 px-4 text-slate-500 font-mono text-[11px]">
+                        {m.recordedAt.split("T")[0]}
+                      </td>
+                      <td className="py-2.5 px-4 text-slate-500">{m.source}</td>
+                      <td className="py-2.5 px-4 text-slate-500 truncate max-w-xs">{m.notes || "—"}</td>
+                      <td className="py-2.5 px-4 text-right">
+                        <button
+                          onClick={() => handleDelete(m.id)}
+                          className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -255,11 +279,12 @@ export default function HealthOverviewPage() {
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave} className="badge-gradient-blue-indigo">
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </PageShell>
   );
 }
-

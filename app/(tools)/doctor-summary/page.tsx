@@ -41,13 +41,14 @@ export default function DoctorSummaryPage() {
       title="Doctor Visit Consultation Summary"
       description="Prepare a concise, structured 1-page clinical brief to share with your physician during upcoming consultations."
       breadcrumbs={[{ label: "Doctor Visit Summary" }]}
+      headerBg="gradient"
       action={
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
             <Printer className="h-3.5 w-3.5" />
             <span>Print Summary</span>
           </Button>
-          <Button size="sm" onClick={handleExportPDF} className="gap-1.5">
+          <Button size="sm" onClick={handleExportPDF} className="gap-1.5 badge-gradient-blue-indigo">
             <Download className="h-3.5 w-3.5" />
             <span>Export to PDF</span>
           </Button>
@@ -56,7 +57,7 @@ export default function DoctorSummaryPage() {
     >
       <div className="space-y-6 max-w-4xl">
         {/* Section Inclusion Toggles */}
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-2.5">
+        <div className="rounded-xl border border-slate-200/80 card-vibrant-blue p-4 shadow-xs space-y-2.5">
           <span className="text-xs font-bold text-slate-800">
             Select Sections to Include in Summary:
           </span>
@@ -66,7 +67,7 @@ export default function DoctorSummaryPage() {
                 type="checkbox"
                 checked={includeVitals}
                 onChange={(e) => setIncludeVitals(e.target.checked)}
-                className="rounded text-teal-700 focus:ring-teal-600"
+                className="rounded text-blue-700 focus:ring-blue-600"
               />
               <span>Recent Vitals</span>
             </label>
@@ -84,7 +85,7 @@ export default function DoctorSummaryPage() {
                 type="checkbox"
                 checked={includeAllergies}
                 onChange={(e) => setIncludeAllergies(e.target.checked)}
-                className="rounded text-teal-700 focus:ring-teal-600"
+                className="rounded text-rose-700 focus:ring-rose-600"
               />
               <span>Allergies</span>
             </label>
@@ -93,7 +94,7 @@ export default function DoctorSummaryPage() {
                 type="checkbox"
                 checked={includeSymptoms}
                 onChange={(e) => setIncludeSymptoms(e.target.checked)}
-                className="rounded text-teal-700 focus:ring-teal-600"
+                className="rounded text-amber-700 focus:ring-amber-600"
               />
               <span>Logged Symptoms</span>
             </label>
@@ -102,7 +103,7 @@ export default function DoctorSummaryPage() {
                 type="checkbox"
                 checked={includeLabs}
                 onChange={(e) => setIncludeLabs(e.target.checked)}
-                className="rounded text-teal-700 focus:ring-teal-600"
+                className="rounded text-emerald-700 focus:ring-emerald-600"
               />
               <span>Recent Lab Results</span>
             </label>
@@ -111,7 +112,7 @@ export default function DoctorSummaryPage() {
                 type="checkbox"
                 checked={includeQuestions}
                 onChange={(e) => setIncludeQuestions(e.target.checked)}
-                className="rounded text-teal-700 focus:ring-teal-600"
+                className="rounded text-indigo-700 focus:ring-indigo-600"
               />
               <span>Questions for Doctor</span>
             </label>
@@ -119,7 +120,7 @@ export default function DoctorSummaryPage() {
         </div>
 
         {/* Printable Paper Document Container */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm space-y-6 text-slate-800">
+        <div className="rounded-2xl border border-slate-200/80 card-vibrant-indigo p-8 shadow-xs space-y-6 text-slate-800">
           {/* Header */}
           <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
             <div>
@@ -127,7 +128,7 @@ export default function DoctorSummaryPage() {
                 PATIENT CONSULTATION BRIEF
               </h2>
               <p className="text-xs text-slate-500">
-                Generated via HealthBuddy Personal Healthcare Platform • Demo Patient Record
+                Generated via HealthBuddy Personal Healthcare Platform &bull; Demo Patient Record
               </p>
             </div>
             <div className="text-xs font-mono text-slate-500 sm:text-right">
@@ -143,7 +144,7 @@ export default function DoctorSummaryPage() {
             </div>
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Age / Sex</span>
-              <span className="font-bold text-slate-900">{mockUser.age} yrs • {mockUser.sex}</span>
+              <span className="font-bold text-slate-900">{mockUser.age} yrs &bull; {mockUser.sex}</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Blood Group</span>
@@ -201,7 +202,7 @@ export default function DoctorSummaryPage() {
               <div className="flex flex-wrap gap-2">
                 {mockAllergies.map((alg) => (
                   <div key={alg.id} className="p-2 rounded bg-rose-50 border border-rose-200 text-rose-950 text-xs">
-                    <strong>{alg.allergen}</strong> ({alg.severity} Severity) — {alg.reaction}
+                    <strong>{alg.allergen}</strong> ({alg.severity} Severity) &mdash; {alg.reaction}
                   </div>
                 ))}
               </div>
@@ -217,7 +218,7 @@ export default function DoctorSummaryPage() {
               <ul className="space-y-1 text-xs">
                 {mockSymptoms.slice(0, 2).map((s) => (
                   <li key={s.id} className="py-1">
-                    <strong>{s.symptomName}</strong> (Severity {s.severity}/10) on {s.startDate} • Trigger notes: {s.possibleTriggers}
+                    <strong>{s.symptomName}</strong> (Severity {s.severity}/10) on {s.startDate} &bull; Trigger notes: {s.possibleTriggers}
                   </li>
                 ))}
               </ul>
@@ -233,19 +234,19 @@ export default function DoctorSummaryPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px]">
                 <div className="p-2 bg-slate-50 rounded">
                   <span className="text-[10px] text-slate-500 block font-sans">Fasting Glucose</span>
-                  <span className="font-bold">94 mg/dL (Ref: 70–99)</span>
+                  <span className="font-bold">94 mg/dL (Ref: 70&ndash;99)</span>
                 </div>
                 <div className="p-2 bg-slate-50 rounded">
                   <span className="text-[10px] text-slate-500 block font-sans">HbA1c</span>
-                  <span className="font-bold">5.4% (Ref: &lt; 5.7%)</span>
+                  <span className="font-bold">{"5.4% (Ref: < 5.7%)"}</span>
                 </div>
                 <div className="p-2 bg-amber-50 rounded border border-amber-100">
                   <span className="text-[10px] text-amber-800 block font-sans">Total Cholesterol</span>
-                  <span className="font-bold text-amber-900">208 mg/dL (Ref: &lt; 200)</span>
+                  <span className="font-bold text-amber-900">{"208 mg/dL (Ref: < 200)"}</span>
                 </div>
                 <div className="p-2 bg-slate-50 rounded">
                   <span className="text-[10px] text-slate-500 block font-sans">HDL Cholesterol</span>
-                  <span className="font-bold">58 mg/dL (Ref: &gt; 40)</span>
+                  <span className="font-bold">{"58 mg/dL (Ref: > 40)"}</span>
                 </div>
               </div>
             </div>
@@ -267,11 +268,10 @@ export default function DoctorSummaryPage() {
 
           {/* Footer note */}
           <div className="text-[10px] text-slate-400 pt-4 border-t border-slate-200 text-center font-sans">
-            Prepared by Patient Alex Mercer using HealthBuddy Personal Healthcare Platform • Illustrative Demo Record
+            Prepared by Patient Alex Mercer using HealthBuddy Personal Healthcare Platform &bull; Illustrative Demo Record
           </div>
         </div>
       </div>
     </PageShell>
   );
 }
-

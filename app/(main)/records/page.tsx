@@ -35,6 +35,15 @@ import { reportsService } from "@/services/reportsService";
 import { MedicalRecord, DocumentCategory } from "@/types/report";
 import { toast } from "sonner";
 
+const categoryStyles: Record<string, { icon: React.ComponentType<{ className?: string }>; gradient: string; badgeBg: string; borderHover: string; bgClass: string }> = {
+  lab_report: { icon: FileText, gradient: "from-blue-500 to-indigo-600", badgeBg: "bg-blue-50 text-blue-700 border-blue-200", borderHover: "hover:border-blue-300", bgClass: "card-vibrant-blue" },
+  prescription: { icon: FileText, gradient: "from-violet-600 to-indigo-600", badgeBg: "bg-violet-50 text-violet-700 border-violet-200", borderHover: "hover:border-violet-300", bgClass: "card-vibrant-violet" },
+  imaging: { icon: FileText, gradient: "from-cyan-500 to-teal-600", badgeBg: "bg-cyan-50 text-cyan-800 border-cyan-200", borderHover: "hover:border-cyan-300", bgClass: "card-vibrant-cyan" },
+  discharge_summary: { icon: FileText, gradient: "from-rose-500 to-pink-600", badgeBg: "bg-rose-50 text-rose-700 border-rose-200", borderHover: "hover:border-pink-300", bgClass: "card-vibrant-rose" },
+  vaccination: { icon: FileText, gradient: "from-emerald-400 to-teal-500", badgeBg: "bg-emerald-50 text-emerald-800 border-emerald-200", borderHover: "hover:border-emerald-300", bgClass: "card-vibrant-emerald" },
+  all: { icon: FileText, gradient: "from-slate-500 to-slate-600", badgeBg: "bg-slate-50 text-slate-700 border-slate-200", borderHover: "hover:border-slate-300", bgClass: "bg-white" },
+};
+
 export default function RecordsPage() {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -91,12 +100,14 @@ export default function RecordsPage() {
     }, 800);
   };
 
+  const getCategoryStyles = (category: string) => categoryStyles[category] || categoryStyles.all;
+
   return (
     <PageShell
       title="Medical Records & Reports"
       description="Your centralized health documents, verified lab tests, and extraction records."
       action={
-        <Button onClick={() => setUploadOpen(true)} className="gap-2">
+        <Button onClick={() => setUploadOpen(true)} className="gap-2 badge-gradient-blue-indigo">
           <UploadCloud className="h-4 w-4" />
           <span>Upload Record</span>
         </Button>
@@ -110,13 +121,13 @@ export default function RecordsPage() {
             onValueChange={setSelectedCategory}
             className="w-full sm:w-auto"
           >
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1">
-              <TabsTrigger value="all">All Documents</TabsTrigger>
-              <TabsTrigger value="lab_report">Lab Reports</TabsTrigger>
-              <TabsTrigger value="prescription">Prescriptions</TabsTrigger>
-              <TabsTrigger value="imaging">Imaging</TabsTrigger>
-              <TabsTrigger value="discharge_summary">Discharge</TabsTrigger>
-              <TabsTrigger value="vaccination">Vaccinations</TabsTrigger>
+            <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
+              <TabsTrigger value="all" className="px-3 py-1.5">All Documents</TabsTrigger>
+              <TabsTrigger value="lab_report" className="px-3 py-1.5">Lab Reports</TabsTrigger>
+              <TabsTrigger value="prescription" className="px-3 py-1.5">Prescriptions</TabsTrigger>
+              <TabsTrigger value="imaging" className="px-3 py-1.5">Imaging</TabsTrigger>
+              <TabsTrigger value="discharge_summary" className="px-3 py-1.5">Discharge</TabsTrigger>
+              <TabsTrigger value="vaccination" className="px-3 py-1.5">Vaccinations</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -166,92 +177,101 @@ export default function RecordsPage() {
             description="No medical documents match your current search query or category filter."
             actionLabel="Upload First Document"
             onAction={() => setUploadOpen(true)}
+            variant="dashed"
           />
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredRecords.map((rec) => (
-              <div
-                key={rec.id}
-                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 transition-all group"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                      <FileText className="h-5 w-5" />
+            {filteredRecords.map((rec) => {
+              const styles = getCategoryStyles(rec.category);
+              const Icon = styles.icon;
+              return (
+                <Link
+                  key={rec.id}
+                  href={`/records/${rec.id}`}
+                  className={`group rounded-2xl border border-slate-200/80 ${styles.bgClass} p-5 shadow-xs transition-all ${styles.borderHover} hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between space-y-4`}
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${styles.gradient} text-white shadow-xs`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles.badgeBg}`}>
+                          {rec.category.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <StatusBadge
+                        status={rec.verificationStatus === "Verified" ? "completed" : "borderline"}
+                        customLabel={rec.verificationStatus}
+                        size="sm"
+                      />
                     </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors leading-snug">
+                        {rec.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {rec.institutionName}
+                      </p>
+                    </div>
+
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                      {rec.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div className="text-[11px] text-slate-400">
+                      <span>{rec.documentDate}</span> • <span>{rec.fileSize}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                      <span>View Report</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+            {filteredRecords.map((rec) => {
+              const styles = getCategoryStyles(rec.category);
+              const Icon = styles.icon;
+              return (
+                <Link
+                  key={rec.id}
+                  href={`/records/${rec.id}`}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition-colors gap-3"
+                >
+                  <div className="flex items-start sm:items-center gap-3 min-w-0">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr ${styles.gradient} text-white shadow-xs`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold text-slate-900 truncate">
+                        {rec.title}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {rec.institutionName} • {rec.documentDate} • {rec.fileSize}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
                     <StatusBadge
                       status={rec.verificationStatus === "Verified" ? "completed" : "borderline"}
                       customLabel={rec.verificationStatus}
                       size="sm"
                     />
+                    <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                      Details
+                    </span>
                   </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-teal-800 transition-colors leading-snug">
-                      {rec.title}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {rec.institutionName}
-                    </p>
-                  </div>
-
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                    {rec.summary}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div className="text-[11px] text-slate-400">
-                    <span>{rec.documentDate}</span> • <span>{rec.fileSize}</span>
-                  </div>
-
-                  <Link
-                    href={`/records/${rec.id}`}
-                    className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-800 transition-colors"
-                  >
-                    <span>View Report</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
-            {filteredRecords.map((rec) => (
-              <div
-                key={rec.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition-colors gap-3"
-              >
-                <div className="flex items-start sm:items-center gap-3 min-w-0">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-bold text-slate-900 truncate">
-                      {rec.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {rec.institutionName} • {rec.documentDate} • {rec.fileSize}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-                  <StatusBadge
-                    status={rec.verificationStatus === "Verified" ? "completed" : "borderline"}
-                    customLabel={rec.verificationStatus}
-                    size="sm"
-                  />
-                  <Link
-                    href={`/records/${rec.id}`}
-                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition-colors"
-                  >
-                    Details
-                  </Link>
-                </div>
-              </div>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -285,8 +305,8 @@ export default function RecordsPage() {
               />
             </div>
 
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-6 text-center">
-              <UploadCloud className="mx-auto h-8 w-8 text-teal-700 mb-2" />
+            <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center">
+              <UploadCloud className="mx-auto h-8 w-8 text-blue-600 mb-2" />
               <p className="text-xs font-semibold text-slate-800">
                 Click or drag & drop file to simulate upload
               </p>
@@ -303,7 +323,7 @@ export default function RecordsPage() {
                 </div>
                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-teal-700 transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -319,7 +339,7 @@ export default function RecordsPage() {
             >
               Cancel
             </Button>
-            <Button disabled={isUploading} onClick={handleUploadSubmit}>
+            <Button disabled={isUploading} onClick={handleUploadSubmit} className="badge-gradient-blue-indigo">
               {isUploading ? "Uploading..." : "Confirm & Extract"}
             </Button>
           </DialogFooter>
@@ -328,4 +348,3 @@ export default function RecordsPage() {
     </PageShell>
   );
 }
-

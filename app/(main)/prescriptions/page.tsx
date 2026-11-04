@@ -31,9 +31,10 @@ export default function PrescriptionsPage() {
     <PageShell
       title="Prescription Intelligence"
       description="Upload a prescription, review the extracted fields, and turn verified instructions into a care plan."
+      headerBg="gradient"
       action={
         <Link href="/prescriptions/upload">
-          <Button className="gap-2">
+          <Button className="gap-2 badge-gradient-blue-indigo">
             <UploadCloud className="h-4 w-4" />
             <span>Upload prescription</span>
           </Button>
@@ -42,15 +43,15 @@ export default function PrescriptionsPage() {
     >
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-blue p-4 shadow-xs">
             <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Total prescriptions</div>
             <div className="mt-3 text-2xl font-black text-slate-900">{prescriptions.length}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-amber p-4 shadow-xs">
             <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Needs review</div>
             <div className="mt-3 text-2xl font-black text-amber-700">{pendingReview}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-emerald p-4 shadow-xs">
             <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Confirmed</div>
             <div className="mt-3 text-2xl font-black text-emerald-700">
               {prescriptions.filter((item) => item.verificationStatus === "user_confirmed").length}
@@ -60,11 +61,13 @@ export default function PrescriptionsPage() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           {prescriptions.map((prescription) => (
-            <div key={prescription.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div key={prescription.id} className="rounded-2xl border border-slate-200/80 card-vibrant-indigo p-5 shadow-xs hover:border-indigo-300 transition-colors">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-blue-600" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg badge-gradient-blue-indigo text-white">
+                      <FileText className="h-4 w-4" />
+                    </div>
                     <span className="text-sm font-bold text-slate-900">{prescription.documentName}</span>
                   </div>
                   <div className="mt-2 text-xs text-slate-500">{prescription.doctorName} • {prescription.clinicName}</div>
@@ -110,12 +113,12 @@ export default function PrescriptionsPage() {
         </div>
 
         {prescriptions.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <div className="rounded-2xl border-2 border-dashed border-slate-300 card-vibrant-slate p-12 text-center">
             <Clock3 className="mx-auto h-8 w-8 text-slate-400" />
             <h3 className="mt-3 text-base font-bold text-slate-900">No prescriptions yet</h3>
             <p className="mt-2 text-sm text-slate-500">Upload a prescription to see extraction, review, and care-plan generation.</p>
             <Link href="/prescriptions/upload" className="mt-4 inline-flex">
-              <Button className="gap-2">
+              <Button className="gap-2 badge-gradient-blue-indigo">
                 <ArrowRight className="h-4 w-4" />
                 Start with a prescription
               </Button>

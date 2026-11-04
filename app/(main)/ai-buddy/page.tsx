@@ -135,7 +135,7 @@ export default function AIBuddyPage() {
             <ShieldCheck className="h-3.5 w-3.5 text-teal-700" />
             <span className="hidden sm:inline">AI Data Permissions</span>
           </Button>
-          <Button size="sm" onClick={handleNewConversation} className="gap-1.5">
+          <Button size="sm" onClick={handleNewConversation} className="gap-1.5 badge-gradient-blue-indigo">
             <Plus className="h-3.5 w-3.5" />
             <span>New Chat</span>
           </Button>
@@ -144,7 +144,7 @@ export default function AIBuddyPage() {
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Recent Conversations (4 cols on desktop) */}
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-4">
+        <div className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-4 card-vibrant-indigo">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
               Recent Consultations
@@ -196,11 +196,11 @@ export default function AIBuddyPage() {
         </div>
 
         {/* Right Column: Chat Workspace (8 cols) */}
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200/80 bg-white shadow-xs flex flex-col h-[650px] overflow-hidden">
+        <div className="lg:col-span-8 rounded-2xl border border-slate-200/80 bg-white shadow-xs flex flex-col h-[650px] overflow-hidden card-vibrant-indigo">
           {/* Chat Header */}
           <div className="p-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-teal-700 text-white">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md badge-gradient-blue-indigo">
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
               <div>
@@ -267,7 +267,7 @@ export default function AIBuddyPage() {
                     <div
                       className={`rounded-2xl px-4 py-3 max-w-[85%] text-xs leading-relaxed space-y-2 ${
                         isUser
-                          ? "bg-teal-700 text-white font-medium rounded-br-xs"
+                          ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white font-medium rounded-br-xs shadow-teal-500/20"
                           : "bg-slate-50 border border-slate-200/80 text-slate-800 rounded-bl-xs"
                       }`}
                     >
@@ -357,7 +357,7 @@ export default function AIBuddyPage() {
               <Button
                 type="submit"
                 disabled={!inputText.trim() || isTyping}
-                className="h-10 px-4 gap-1.5"
+                className="h-10 px-4 gap-1.5 badge-gradient-blue-indigo"
               >
                 <Send className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Send</span>
@@ -411,4 +411,3 @@ export default function AIBuddyPage() {
     </PageShell>
   );
 }
-

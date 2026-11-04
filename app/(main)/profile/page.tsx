@@ -137,20 +137,21 @@ export default function ProfilePage() {
     <PageShell
       title="Profile & Settings"
       description="Manage your personal healthcare data, emergency records, allergies, and AI data permissions."
+      headerBg="gradient"
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1">
-          <TabsTrigger value="personal">Personal Info</TabsTrigger>
-          <TabsTrigger value="health">Health Profile</TabsTrigger>
-          <TabsTrigger value="allergies">Allergies ({allergies.length})</TabsTrigger>
-          <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
-          <TabsTrigger value="ai_permissions">AI Permissions</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy & Security</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="personal" className="px-3 py-1.5">Personal Info</TabsTrigger>
+          <TabsTrigger value="health" className="px-3 py-1.5">Health Profile</TabsTrigger>
+          <TabsTrigger value="allergies" className="px-3 py-1.5">Allergies ({allergies.length})</TabsTrigger>
+          <TabsTrigger value="lifestyle" className="px-3 py-1.5">Lifestyle</TabsTrigger>
+          <TabsTrigger value="ai_permissions" className="px-3 py-1.5">AI Permissions</TabsTrigger>
+          <TabsTrigger value="privacy" className="px-3 py-1.5">Privacy & Security</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Personal Info */}
         <TabsContent value="personal" className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs max-w-2xl space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-blue p-6 shadow-xs max-w-2xl space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
               Personal Information
             </h3>
@@ -192,7 +193,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex justify-end">
-              <Button onClick={handleSavePersonal} size="sm" className="gap-1.5">
+              <Button onClick={handleSavePersonal} size="sm" className="gap-1.5 badge-gradient-blue-indigo">
                 <Save className="h-3.5 w-3.5" />
                 <span>Save Changes</span>
               </Button>
@@ -202,7 +203,7 @@ export default function ProfilePage() {
 
         {/* Tab 2: Health Profile */}
         <TabsContent value="health" className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs max-w-2xl space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-teal p-6 shadow-xs max-w-2xl space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
               Biometrics & Clinical Background
             </h3>
@@ -259,7 +260,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex justify-end">
-              <Button onClick={handleSaveHealthProfile} size="sm" className="gap-1.5">
+              <Button onClick={handleSaveHealthProfile} size="sm" className="gap-1.5 badge-gradient-teal-cyan">
                 <Save className="h-3.5 w-3.5" />
                 <span>Save Biometrics</span>
               </Button>
@@ -274,13 +275,13 @@ export default function ProfilePage() {
               <span className="text-xs font-semibold text-slate-500">
                 Documented Adverse Reactions & Allergies
               </span>
-              <Button size="sm" onClick={() => setAllergyModalOpen(true)} className="gap-1.5">
+              <Button size="sm" onClick={() => setAllergyModalOpen(true)} className="gap-1.5 badge-gradient-rose-pink">
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Allergy Record</span>
               </Button>
             </div>
 
-            <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+            <div className="border border-slate-200/80 rounded-xl card-vibrant-rose overflow-hidden shadow-xs divide-y divide-slate-100">
               {allergies.map((alg) => (
                 <div key={alg.id} className="p-4 flex items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -315,7 +316,7 @@ export default function ProfilePage() {
 
         {/* Tab 4: Lifestyle */}
         <TabsContent value="lifestyle" className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs max-w-2xl space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-emerald p-6 shadow-xs max-w-2xl space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
               Lifestyle Habits & Environmental Factors
             </h3>
@@ -343,7 +344,7 @@ export default function ProfilePage() {
 
         {/* Tab 5: AI Permissions */}
         <TabsContent value="ai_permissions" className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs max-w-2xl space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-indigo p-6 shadow-xs max-w-2xl space-y-4">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
                 AI Data Processing Permissions
@@ -361,7 +362,7 @@ export default function ProfilePage() {
                 { key: "allowHealthMeasurements", label: "Health Measurements (Vitals)", desc: "Enables BP, heart rate, and glucose trend analysis" },
                 { key: "allowHealthProfile", label: "General Health Profile", desc: "Includes age, BMI, allergies, and family history" },
               ].map((item) => (
-                <div key={item.key} className="p-3.5 flex items-center justify-between hover:bg-slate-50">
+                <div key={item.key} className="p-3.5 flex items-center justify-between hover:bg-indigo-50/50">
                   <div className="pr-4">
                     <p className="text-xs font-bold text-slate-900">{item.label}</p>
                     <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
@@ -385,7 +386,7 @@ export default function ProfilePage() {
 
         {/* Tab 6: Privacy & Security */}
         <TabsContent value="privacy" className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs max-w-2xl space-y-5">
+          <div className="rounded-2xl border border-slate-200/80 card-vibrant-violet p-6 shadow-xs max-w-2xl space-y-5">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
                 Privacy, Export & Account Settings
@@ -481,11 +482,12 @@ export default function ProfilePage() {
             <Button variant="outline" onClick={() => setAllergyModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddAllergy}>Save Allergy</Button>
+            <Button onClick={handleAddAllergy} className="badge-gradient-rose-pink">
+              Save Allergy
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </PageShell>
   );
 }
-

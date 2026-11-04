@@ -88,6 +88,7 @@ export default function MedicinesPage() {
       title="Medications & Supplements"
       description="Personal medication schedule, active supplements, and confirmed prescribed instructions."
       breadcrumbs={[{ label: "Medicines" }]}
+      headerBg="gradient"
       action={
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild className="gap-1.5">
@@ -96,7 +97,7 @@ export default function MedicinesPage() {
               <span>Drug Interactions</span>
             </Link>
           </Button>
-          <Button size="sm" onClick={() => setAddModalOpen(true)} className="gap-1.5">
+          <Button size="sm" onClick={() => setAddModalOpen(true)} className="gap-1.5 badge-gradient-teal-cyan">
             <Plus className="h-3.5 w-3.5" />
             <span>Add Medicine</span>
           </Button>
@@ -104,10 +105,10 @@ export default function MedicinesPage() {
       }
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1">
-          <TabsTrigger value="my_meds">My Medicines ({medicines.filter((m) => m.status === "Active").length})</TabsTrigger>
-          <TabsTrigger value="schedule">Daily Schedule</TabsTrigger>
-          <TabsTrigger value="history">Medication History</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="my_meds" className="px-3 py-1.5">My Medicines ({medicines.filter((m) => m.status === "Active").length})</TabsTrigger>
+          <TabsTrigger value="schedule" className="px-3 py-1.5">Daily Schedule</TabsTrigger>
+          <TabsTrigger value="history" className="px-3 py-1.5">Medication History</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: My Medicines */}
@@ -116,12 +117,12 @@ export default function MedicinesPage() {
             {medicines.filter((m) => m.status === "Active").map((med) => (
               <div
                 key={med.id}
-                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 flex flex-col justify-between"
+                className="rounded-xl border border-slate-200/80 card-vibrant-teal p-5 shadow-xs space-y-3 flex flex-col justify-between hover:border-teal-300 transition-colors"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg badge-gradient-teal-cyan text-white">
                         <Pill className="h-4 w-4" />
                       </div>
                       <div>
@@ -158,11 +159,11 @@ export default function MedicinesPage() {
 
         {/* Tab 2: Schedule */}
         <TabsContent value="schedule" className="space-y-4">
-          <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+          <div className="border border-slate-200/80 rounded-xl card-vibrant-indigo overflow-hidden shadow-xs divide-y divide-slate-100">
             {reminders.map((rem) => {
               const isCompleted = rem.status === "completed";
               return (
-                <div key={rem.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div key={rem.id} className="p-4 flex items-center justify-between hover:bg-indigo-50/50 transition-colors">
                   <div className="flex items-start gap-3">
                     <button
                       onClick={() => handleToggleReminder(rem.id, rem.status)}
@@ -188,6 +189,7 @@ export default function MedicinesPage() {
                       size="sm"
                       variant={isCompleted ? "outline" : "default"}
                       onClick={() => handleToggleReminder(rem.id, rem.status)}
+                      className={isCompleted ? "" : "badge-gradient-teal-cyan"}
                     >
                       {isCompleted ? "Mark Pending" : "Confirm Taken"}
                     </Button>
@@ -200,9 +202,9 @@ export default function MedicinesPage() {
 
         {/* Tab 3: History */}
         <TabsContent value="history" className="space-y-4">
-          <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+          <div className="border border-slate-200/80 rounded-xl card-vibrant-emerald overflow-hidden shadow-xs divide-y divide-slate-100">
             {medicines.filter((m) => m.status === "Completed").map((med) => (
-              <div key={med.id} className="p-4 flex items-center justify-between">
+              <div key={med.id} className="p-4 flex items-center justify-between hover:bg-emerald-50/50 transition-colors">
                 <div>
                   <h4 className="text-xs font-bold text-slate-900">{med.name} ({med.strength})</h4>
                   <p className="text-xs text-slate-500 mt-0.5">{med.userConfirmedInstructions}</p>
@@ -239,11 +241,10 @@ export default function MedicinesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddMedicine}>Save Medicine</Button>
+            <Button onClick={handleAddMedicine} className="badge-gradient-teal-cyan">Save Medicine</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </PageShell>
   );
 }
-
