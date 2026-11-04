@@ -41,20 +41,20 @@ export class BaseRepository<TTable extends TableName> {
   }
 
   protected async executeQuery<T>(
-    query: Promise<{ data: T | null; error: any }>
-  ): Promise<{ data: T | null; error: Error | null }> {
+    query: Promise<{ data: T | null; error: any; count?: number | null }>
+  ): Promise<{ data: T | null; error: Error | null; count: number | null }> {
     if (this.isDemoMode) {
-      return { data: null, error: new Error('Demo mode: Supabase not configured') };
+      return { data: null, error: new Error('Demo mode: Supabase not configured'), count: null };
     }
 
     try {
       const result = await query;
       if (result.error) {
-        return { data: null, error: new Error(result.error.message) };
+        return { data: null, error: new Error(result.error.message), count: null };
       }
-      return { data: result.data, error: null };
+      return { data: result.data, error: null, count: result.count ?? null };
     } catch (err) {
-      return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
+      return { data: null, error: err instanceof Error ? err : new Error('Unknown error'), count: null };
     }
   }
 

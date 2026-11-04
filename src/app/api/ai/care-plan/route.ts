@@ -32,11 +32,11 @@ export async function POST(request: NextRequest) {
       ]);
 
       carePlan = await carePlanGenerationService.generate({
-        conditions: profile?.health_profile?.conditions,
+        conditions: profile?.health_profile?.existingConditions ?? [],
         medications: medications.map(m => ({
           name: m.name,
-          dosage: m.dosage,
-          frequency: m.frequency,
+          dosage: m.strength ?? m.user_confirmed_instructions ?? '',
+          frequency: m.frequency ?? '',
         })),
         healthMetrics: healthMetrics.map(m => ({
           type: m.metric_type,
@@ -45,28 +45,69 @@ export async function POST(request: NextRequest) {
           date: m.recorded_at,
         })),
         userProfile: profile ? {
-          age: profile.health_profile?.age,
-          gender: profile.health_profile?.gender,
+          age: profile.health_profile?.heightCm ? Math.floor((new Date().getTime() - new Date(profile.date_of_birth ?? '').getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
+          gender: profile.sex ?? undefined,
           lifestyle: profile.lifestyle ? {
-            activityLevel: profile.lifestyle.activity_level,
-            diet: profile.lifestyle.diet,
-            sleepHours: profile.lifestyle.sleep_hours,
+            activityLevel: profile.lifestyle.activityLevel,
+            diet: profile.lifestyle.dietType,
+            sleepHours: profile.lifestyle.sleepAverageHours,
           } : undefined,
         } : undefined,
       });
     }
 
-    // Save care plan to database
-    const savedPlan = await carePlansRepository.createCarePlan({
-      title: carePlan.title,
-      description: carePlan.description,
-      goals: carePlan.goals as any,
-      tasks: carePlan.tasks as any,
-      follow_up_schedule: carePlan.followUpSchedule as any,
-      source_type: fromPrescription ? 'prescription' : 'ai_generated',
+    // Map CarePlanGenerationResult to database CarePlan Insert schema
+    const medicationSchedule = carePlan.tasks
+      .filter(t => t.category === 'medication')
+      .map(t => ({
+        medicineName: t.title,
+        dosage: '',
+        frequency: t.frequency,
+        timing: null,
+        duration: null,
+        startDate: null,
+        endDate: null,
+        instructions: t.description,
+        reminderTimes: [],
+      }));
+
+    const followUpAppointment = carePlan.followUpSchedule.find(f => f.type === 'appointment');
+    const tests = carePlan.followUpSchedule
+      .filter(f => f.type === 'lab_test' || f.type === 'checkup')
+      .map(f => ({
+        name: f.title,
+        suggestedAction: f.description,
+        status: 'pending',
+      }));
+
+    const tasks = carePlan.tasks.map(t => ({
+      id: crypto.randomUUID(),
+      title: t.title,
+      dueDate: carePlan.followUpSchedule.find(f => f.title === t.title)?.dueDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'pending' as const,
+      source: t.category,
+    }));
+
+    // Save care plan to database - match CarePlan Insert schema
+    const savedPlan = await carePlansRepository.create({
+      user_id: user.id,
+      prescription_id: fromPrescription ? prescriptionData?.id ?? null : null,
+      summary: carePlan.description,
+      medication_schedule: medicationSchedule,
+      follow_up_appointment: followUpAppointment ? {
+        doctorName: null,
+        clinicName: null,
+        followUpDate: followUpAppointment.dueDate,
+        purpose: followUpAppointment.description,
+        notes: null,
+        status: 'scheduled',
+      } : null,
+      tests,
+      tasks,
       status: 'active',
-      progress: 0,
-    }, user.id);
+      is_user_confirmed: false,
+      confirmed_at: null,
+    });
 
     return NextResponse.json({ carePlan: savedPlan, generated: carePlan });
   } catch (error) {

@@ -40,7 +40,16 @@ export class AIChatService {
         convId = activeConv.id;
       } else {
         const newConv = await aiConversationsRepository.createConversation(
-          { context_type: 'general', status: 'active' },
+          {
+            selected_context: {
+              medicalReports: false,
+              medicines: false,
+              symptoms: false,
+              healthMeasurements: false,
+              healthProfile: false,
+              generalKnowledgeOnly: true,
+            }
+          },
           userId
         );
         convId = newConv?.id ?? '';
@@ -56,7 +65,7 @@ export class AIChatService {
     const context = this.buildUserContext(profile);
 
     // Add user message
-    await aiMessagesRepository.addUserMessage(convId, content);
+    await aiMessagesRepository.addUserMessage(convId, content, userId);
 
     // Get conversation history
     const history = await aiMessagesRepository.findRecentByConversation(convId, 20);
@@ -64,7 +73,7 @@ export class AIChatService {
     // Build messages for AI
     const messages: AIMessage[] = [
       { role: 'system', content: `${SYSTEM_PROMPT}\n\nUser Context:\n${context}` },
-      ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ...history.map((m) => ({ role: m.sender as 'user' | 'assistant', content: m.content })),
       { role: 'user', content },
     ];
 
@@ -78,13 +87,11 @@ export class AIChatService {
     const assistantResponse = response.choices[0].message.content;
 
     // Save assistant message
-    await aiMessagesRepository.addAssistantMessage(convId, assistantResponse);
+    await aiMessagesRepository.addAssistantMessage(convId, assistantResponse, userId);
 
-    // Update conversation last message
-    const lastMsg = await aiMessagesRepository.findRecentByConversation(convId, 1);
-    if (lastMsg[0]) {
-      await aiConversationsRepository.updateLastMessage(convId, lastMsg[0].id);
-    }
+    // Update conversation last message preview and increment count
+    await aiConversationsRepository.updateLastMessagePreview(convId, assistantResponse.slice(0, 200));
+    await aiConversationsRepository.incrementMessageCount(convId);
 
     return { response: assistantResponse, conversationId: convId };
   }
@@ -103,7 +110,16 @@ export class AIChatService {
         convId = activeConv.id;
       } else {
         const newConv = await aiConversationsRepository.createConversation(
-          { context_type: 'general', status: 'active' },
+          {
+            selected_context: {
+              medicalReports: false,
+              medicines: false,
+              symptoms: false,
+              healthMeasurements: false,
+              healthProfile: false,
+              generalKnowledgeOnly: true,
+            }
+          },
           userId
         );
         convId = newConv?.id ?? '';
@@ -117,13 +133,13 @@ export class AIChatService {
     const profile = await profilesRepository.getCurrentUserProfile();
     const context = this.buildUserContext(profile);
 
-    await aiMessagesRepository.addUserMessage(convId, content);
+    await aiMessagesRepository.addUserMessage(convId, content, userId);
 
     const history = await aiMessagesRepository.findRecentByConversation(convId, 20);
 
     const messages: AIMessage[] = [
       { role: 'system', content: `${SYSTEM_PROMPT}\n\nUser Context:\n${context}` },
-      ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ...history.map((m) => ({ role: m.sender as 'user' | 'assistant', content: m.content })),
       { role: 'user', content },
     ];
 
@@ -143,19 +159,18 @@ export class AIChatService {
       }
     }
 
-    await aiMessagesRepository.addAssistantMessage(convId, fullResponse);
+    await aiMessagesRepository.addAssistantMessage(convId, fullResponse, userId);
 
-    const lastMsg = await aiMessagesRepository.findRecentByConversation(convId, 1);
-    if (lastMsg[0]) {
-      await aiConversationsRepository.updateLastMessage(convId, lastMsg[0].id);
-    }
+    // Update conversation last message preview and increment count
+    await aiConversationsRepository.updateLastMessagePreview(convId, fullResponse.slice(0, 200));
+    await aiConversationsRepository.incrementMessageCount(convId);
 
     yield { chunk: '', conversationId: convId, done: true };
   }
 
   async getConversationHistory(conversationId: string, limit = 50): Promise<AIMessage[]> {
     const messages = await aiMessagesRepository.findByConversation(conversationId, limit);
-    return messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    return messages.map((m) => ({ role: m.sender as 'user' | 'assistant', content: m.content }));
   }
 
   async getUserConversations(userId: string) {
@@ -163,7 +178,15 @@ export class AIChatService {
   }
 
   async createNewConversation(userId: string, contextType: 'general' | 'prescription' | 'symptoms' | 'care_plan' = 'general') {
-    return aiConversationsRepository.createConversation({ context_type: contextType, status: 'active' }, userId);
+    const contextMap = {
+      general: { medicalReports: false, medicines: false, symptoms: false, healthMeasurements: false, healthProfile: false, generalKnowledgeOnly: true },
+      prescription: { medicalReports: true, medicines: true, symptoms: false, healthMeasurements: false, healthProfile: true, generalKnowledgeOnly: false },
+      symptoms: { medicalReports: false, medicines: true, symptoms: true, healthMeasurements: true, healthProfile: true, generalKnowledgeOnly: false },
+      care_plan: { medicalReports: true, medicines: true, symptoms: true, healthMeasurements: true, healthProfile: true, generalKnowledgeOnly: false },
+    };
+    return aiConversationsRepository.createConversation({
+      selected_context: contextMap[contextType]
+    }, userId);
   }
 
   private buildUserContext(profile: any): string {
@@ -171,14 +194,17 @@ export class AIChatService {
 
     const parts: string[] = [];
 
-    if (profile.health_profile?.conditions?.length) {
-      parts.push(`Conditions: ${profile.health_profile.conditions.join(', ')}`);
+    if (profile.health_profile?.existingConditions?.length) {
+      parts.push(`Conditions: ${profile.health_profile.existingConditions.join(', ')}`);
     }
-    if (profile.health_profile?.allergies?.length) {
-      parts.push(`Allergies: ${profile.health_profile.allergies.join(', ')}`);
+    if (profile.health_profile?.familyHistory?.length) {
+      parts.push(`Family History: ${profile.health_profile.familyHistory.join(', ')}`);
     }
-    if (profile.lifestyle?.activity_level) {
-      parts.push(`Activity Level: ${profile.lifestyle.activity_level}`);
+    if (profile.lifestyle?.activityLevel) {
+      parts.push(`Activity Level: ${profile.lifestyle.activityLevel}`);
+    }
+    if (profile.lifestyle?.dietType) {
+      parts.push(`Diet: ${profile.lifestyle.dietType}`);
     }
 
     return parts.length > 0 ? parts.join('\n') : 'No specific health data recorded yet.';

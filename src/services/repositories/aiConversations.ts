@@ -28,8 +28,14 @@ export class AIConversationsRepository extends BaseRepository<'ai_conversations'
     return results[0] ?? null;
   }
 
-  async createConversation(data: Omit<AIConversationInsert, 'user_id'>, userId: string): Promise<AIConversationRow | null> {
-    return this.create({ ...data, user_id: userId } as AIConversationInsert);
+  async createConversation(data: Partial<Omit<AIConversationInsert, 'user_id'>>, userId: string): Promise<AIConversationRow | null> {
+    return this.create({
+      ...data,
+      user_id: userId,
+      title: data.title ?? 'New Conversation',
+      message_count: data.message_count ?? 0,
+      last_message_preview: data.last_message_preview ?? null,
+    } as AIConversationInsert);
   }
 
   async updateLastMessagePreview(conversationId: string, preview: string): Promise<AIConversationRow | null> {

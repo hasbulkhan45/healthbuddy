@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerAnonClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

@@ -16,7 +16,7 @@ export class FollowUpTasksRepository extends BaseRepository<'follow_up_tasks'> {
 
   async findPending(userId: string): Promise<FollowUpTaskRow[]> {
     return this.findByUserId(userId, {
-      filters: { status: 'pending' },
+      filters: { is_completed: false },
       orderBy: { column: 'due_date', ascending: true },
     });
   }
@@ -30,7 +30,7 @@ export class FollowUpTasksRepository extends BaseRepository<'follow_up_tasks'> {
       .from(this.tableName)
       .select('*')
       .eq('user_id', userId)
-      .eq('status', 'pending')
+      .eq('is_completed', false)
       .lt('due_date', now)
       .order('due_date', { ascending: true });
 
@@ -47,7 +47,7 @@ export class FollowUpTasksRepository extends BaseRepository<'follow_up_tasks'> {
 
   async findBySource(userId: string, sourceType: string): Promise<FollowUpTaskRow[]> {
     return this.findByUserId(userId, {
-      filters: { source_type: sourceType },
+      filters: { source: sourceType },
       orderBy: { column: 'created_at', ascending: false },
     });
   }
@@ -71,14 +71,14 @@ export class FollowUpTasksRepository extends BaseRepository<'follow_up_tasks'> {
 
   async completeTask(taskId: string): Promise<FollowUpTaskRow | null> {
     return this.update(taskId, {
-      status: 'completed',
+      is_completed: true,
       completed_at: new Date().toISOString(),
     } as FollowUpTaskUpdate);
   }
 
-  async updateStatus(taskId: string, status: FollowUpTaskRow['status']): Promise<FollowUpTaskRow | null> {
-    const updates: FollowUpTaskUpdate = { status };
-    if (status === 'completed') {
+  async updateCompletionStatus(taskId: string, isCompleted: boolean): Promise<FollowUpTaskRow | null> {
+    const updates: FollowUpTaskUpdate = { is_completed: isCompleted };
+    if (isCompleted) {
       updates.completed_at = new Date().toISOString();
     }
     return this.update(taskId, updates);

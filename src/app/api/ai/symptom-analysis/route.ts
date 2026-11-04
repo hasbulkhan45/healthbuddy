@@ -26,10 +26,18 @@ export async function POST(request: NextRequest) {
     // Get user profile for context
     const profile = await profilesRepository.findById(user.id);
 
+    // Calculate age from date_of_birth if available
+    let age: number | undefined;
+    if (profile?.date_of_birth) {
+      const birthDate = new Date(profile.date_of_birth);
+      const today = new Date();
+      age = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+    }
+
     const userContext = profile ? {
-      age: profile.health_profile?.age ?? undefined,
-      gender: profile.health_profile?.gender ?? undefined,
-      medicalHistory: profile.health_profile?.conditions ?? undefined,
+      age,
+      gender: profile.sex ?? undefined,
+      medicalHistory: profile.health_profile?.existingConditions ?? [],
       currentMedications: undefined, // Would need to fetch from medications table
     } : undefined;
 

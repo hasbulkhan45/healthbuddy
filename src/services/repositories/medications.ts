@@ -16,7 +16,7 @@ export class MedicationsRepository extends BaseRepository<'medications'> {
 
   async findActive(userId: string): Promise<MedicationRow[]> {
     return this.findByUserId(userId, {
-      filters: { is_active: true },
+      filters: { status: 'Active' },
       orderBy: { column: 'created_at', ascending: false },
     });
   }
@@ -37,7 +37,7 @@ export class MedicationsRepository extends BaseRepository<'medications'> {
       .from(this.tableName)
       .select('*')
       .eq('user_id', userId)
-      .eq('is_active', true)
+      .eq('status', 'Active')
       .lte('start_date', today)
       .or(`end_date.is.null,end_date.gte.${today}`)
       .order('created_at', { ascending: false });
@@ -46,12 +46,8 @@ export class MedicationsRepository extends BaseRepository<'medications'> {
     return data as MedicationRow[];
   }
 
-  async updateAdherence(medicationId: string, adherence: MedicationRow['adherence_rate']): Promise<MedicationRow | null> {
-    return this.update(medicationId, { adherence_rate: adherence } as MedicationUpdate);
-  }
-
   async toggleActive(medicationId: string, isActive: boolean): Promise<MedicationRow | null> {
-    return this.update(medicationId, { is_active: isActive } as MedicationUpdate);
+    return this.update(medicationId, { status: isActive ? 'Active' : 'Paused' } as MedicationUpdate);
   }
 }
 
