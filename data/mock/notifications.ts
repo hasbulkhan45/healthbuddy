@@ -1,0 +1,92 @@
+import { AppNotification, ActivityFeedItem } from "@/types/notification";
+
+export const mockNotifications: AppNotification[] = [
+  {
+    id: "notif_001",
+    userId: "user_alex_001",
+    title: "Upcoming Appointment in 14 Days",
+    message: "Consultation with Dr. Sarah Jenkins (Cardiology) scheduled for Nov 18, 10:30 AM.",
+    category: "appointments",
+    createdAt: "2026-11-04T08:00:00Z",
+    isRead: false,
+    actionUrl: "/care",
+    actionLabel: "View Appointment",
+  },
+  {
+    id: "notif_002",
+    userId: "user_alex_001",
+    title: "Lab Report Verified",
+    message: "Comprehensive Metabolic & Lipid Panel from Metropolitan Diagnostics has been verified.",
+    category: "reports",
+    createdAt: "2026-10-25T14:30:00Z",
+    isRead: false,
+    actionUrl: "/records/rec_001",
+    actionLabel: "Open Report",
+  },
+  {
+    id: "notif_003",
+    userId: "user_alex_001",
+    title: "Daily Morning Medications Due",
+    message: "Vitamin D3 (2,000 IU) and Omega-3 (1,000 mg) scheduled for 08:30 AM.",
+    category: "medications",
+    createdAt: "2026-11-04T08:30:00Z",
+    isRead: false,
+    actionUrl: "/medicines",
+    actionLabel: "Take Medicines",
+  },
+  {
+    id: "notif_004",
+    userId: "user_alex_001",
+    title: "Blood Pressure Reading Logged",
+    message: "Morning reading: 120/80 mmHg recorded in Optimal status range.",
+    category: "health",
+    createdAt: "2026-11-04T08:30:00Z",
+    isRead: true,
+    actionUrl: "/health-overview",
+    actionLabel: "View Vitals",
+  },
+];
+
+export const mockActivityFeed: ActivityFeedItem[] = [
+  {
+    id: "act_001",
+    type: "measurement",
+    title: "Blood Pressure Logged",
+    description: "120/80 mmHg • Optimal resting reading recorded manually.",
+    timestamp: "Today at 08:30 AM",
+    targetHref: "/health-overview",
+  },
+  {
+    id: "act_002",
+    type: "medicine",
+    title: "Morning Supplements Taken",
+    description: "Vitamin D3 & Omega-3 confirmed completed yesterday.",
+    timestamp: "Yesterday at 08:42 AM",
+    targetHref: "/medicines",
+  },
+  {
+    id: "act_003",
+    type: "symptom",
+    title: "Tension Headache Logged",
+    description: "Mild severity (3/10) • Frontal headache following screen work.",
+    timestamp: "Oct 30 at 05:15 PM",
+    targetHref: "/symptoms",
+  },
+  {
+    id: "act_004",
+    type: "report_upload",
+    title: "Metabolic & Lipid Panel Uploaded",
+    description: "8 tests extracted and confirmed with laboratory reference ranges.",
+    timestamp: "Oct 25 at 02:20 PM",
+    targetHref: "/records/rec_001",
+  },
+  {
+    id: "act_005",
+    type: "appointment",
+    title: "Dental Cleaning Completed",
+    description: "Routine cleaning and exam with Dr. Keith Wong marked complete.",
+    timestamp: "Sep 12 at 09:45 AM",
+    targetHref: "/care",
+  },
+];
+

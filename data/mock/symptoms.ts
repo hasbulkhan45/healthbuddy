@@ -1,0 +1,47 @@
+import { SymptomLog } from "@/types/symptom";
+
+export const mockSymptoms: SymptomLog[] = [
+  {
+    id: "sym_001",
+    userId: "user_alex_001",
+    symptomName: "Mild Frontal Tension Headache",
+    severity: 3,
+    startDate: "2026-10-30",
+    duration: "About 2 hours",
+    frequency: "Intermittent",
+    associatedSymptoms: ["Mild eye strain", "Screen fatigue"],
+    possibleTriggers: "Prolonged monitor use without breaks, missed afternoon hydration.",
+    notes: "Resolved spontaneously following a 20-minute walk outside and drinking water.",
+    isEmergencyAlert: false,
+    recordedAt: "2026-10-30T17:15:00Z",
+  },
+  {
+    id: "sym_002",
+    userId: "user_alex_001",
+    symptomName: "Nasal Congestion & Sneezing",
+    severity: 2,
+    startDate: "2026-10-18",
+    duration: "All morning",
+    frequency: "Constant",
+    associatedSymptoms: ["Watery eyes"],
+    possibleTriggers: "Yard cleanup and outdoor lawn mowing.",
+    notes: "Took 10 mg Cetirizine with satisfactory symptomatic relief within 1 hour.",
+    isEmergencyAlert: false,
+    recordedAt: "2026-10-18T11:00:00Z",
+  },
+  {
+    id: "sym_003",
+    userId: "user_alex_001",
+    symptomName: "Lumbar Muscular Tightness",
+    severity: 3,
+    startDate: "2026-09-28",
+    duration: "Next morning stiffness",
+    frequency: "Rare",
+    associatedSymptoms: ["Stiffness upon waking"],
+    possibleTriggers: "Increased deadlift weight at gym session the prior evening.",
+    notes: "Gentle mobility stretching and foam rolling relieved stiffness over 48 hours.",
+    isEmergencyAlert: false,
+    recordedAt: "2026-09-28T08:00:00Z",
+  },
+];
+
