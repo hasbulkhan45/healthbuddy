@@ -13,6 +13,7 @@ import { MoreToolsGrid } from "@/components/dashboard/more-tools-grid";
 import { healthService } from "@/services/healthService";
 import { HealthMeasurement, WellnessScore } from "@/types/health";
 import { mockUser } from "@/data/mock/users";
+import { PrescriptionIntelligenceCard } from "@/components/dashboard/prescription-intelligence-card";
 
 export default function HomeDashboardPage() {
   const [wellnessScore, setWellnessScore] = useState<WellnessScore | null>(null);
@@ -80,6 +81,10 @@ export default function HomeDashboardPage() {
       {/* F. Today's Care Plan (Medications, Reminders & Consultations) */}
       <section>
         <TodayCarePlan />
+      </section>
+
+      <section>
+        <PrescriptionIntelligenceCard />
       </section>
 
       {/* G. AI Health Insights */}
