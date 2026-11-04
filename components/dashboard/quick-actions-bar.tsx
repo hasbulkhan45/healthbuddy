@@ -27,9 +27,11 @@ import { symptomsService } from "@/services/symptomsService";
 import { medicinesService } from "@/services/medicinesService";
 import { reportsService } from "@/services/reportsService";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export function QuickActionsBar() {
   const router = useRouter();
+  const { user } = useAuth();
 
   // Modals state
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
@@ -147,6 +149,10 @@ export function QuickActionsBar() {
       toast.error("Please enter report title");
       return;
     }
+    if (!user) {
+      toast.error("Please sign in to upload reports");
+      return;
+    }
     setIsUploading(true);
     setUploadProgress(25);
     setTimeout(() => setUploadProgress(70), 300);
@@ -159,7 +165,8 @@ export function QuickActionsBar() {
           category: "lab_report",
           institutionName: "Diagnostic Laboratory Center",
           documentDate: new Date().toISOString().split("T")[0],
-        }
+        },
+        user.id
       );
       setIsUploading(false);
       setUploadModalOpen(false);

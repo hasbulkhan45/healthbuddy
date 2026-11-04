@@ -98,6 +98,8 @@ export interface AIProviderInterface {
   complete(messages: AIMessage[], options?: AICompletionOptions): Promise<AICompletionResponse>;
   completeStream(messages: AIMessage[], options?: AICompletionOptions): AsyncIterable<AIStreamChunk>;
 
+  createEmbedding(text: string, options?: AIEmbeddingOptions): Promise<AIEmbeddingResponse>;
+
   countTokens(messages: AIMessage[]): Promise<number>;
   estimateCost(usage: AIUsage): number;
   getAvailableModels(): AIModelInfo[];
@@ -114,6 +116,21 @@ export interface AIModelInfo {
   supportsStreaming: boolean;
   inputCostPer1k: number;
   outputCostPer1k: number;
+}
+
+export interface AIEmbeddingOptions {
+  model?: string;
+  dimensions?: number;
+  encodingFormat?: 'float' | 'base64';
+}
+
+export interface AIEmbeddingResponse {
+  data: Array<{ embedding: number[]; index: number; object: 'embedding' }>;
+  usage: {
+    promptTokens: number;
+    totalTokens: number;
+  };
+  model: string;
 }
 
 export interface HealthBuddyAISystemPrompt {

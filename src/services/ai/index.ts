@@ -6,3 +6,4 @@ export { prescriptionExtractionService } from './prescriptionExtraction';
 export { symptomAnalysisService } from './symptomAnalysis';
 export { carePlanGenerationService } from './carePlanGeneration';
 export { aiChatService } from './aiChat';
+export { embeddingsService } from './embeddings';

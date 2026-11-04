@@ -12,6 +12,8 @@ import {
   AIModelInfo,
   AIProviderConfig,
   AIMessageContent,
+  AIEmbeddingOptions,
+  AIEmbeddingResponse,
 } from './types';
 
 interface AnthropicMessage {
@@ -353,5 +355,11 @@ export class AnthropicProvider extends BaseAIProvider {
     const inputCost = (usage.promptTokens / 1000) * modelInfo.inputCostPer1k;
     const outputCost = (usage.completionTokens / 1000) * modelInfo.outputCostPer1k;
     return inputCost + outputCost;
+  }
+
+  async createEmbedding(text: string, options?: AIEmbeddingOptions): Promise<AIEmbeddingResponse> {
+    // Anthropic doesn't have an embeddings API
+    // In production, you would use a different provider (OpenAI, Cohere, etc.) for embeddings
+    throw new Error('Anthropic does not provide embeddings API. Use OpenAI provider for embeddings.');
   }
 }

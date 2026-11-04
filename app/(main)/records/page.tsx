@@ -67,7 +67,7 @@ export default function RecordsPage() {
   useEffect(() => {
     loadRecords();
     const unsub = reportsService.subscribe(loadRecords);
-    return unsub;
+    return () => { unsub(); };
   }, [selectedCategory, user]);
 
   const filteredRecords = records.filter(
@@ -82,27 +82,46 @@ export default function RecordsPage() {
       toast.error("Please enter a document title");
       return;
     }
+    if (!user) {
+      toast.error("Please sign in to upload documents");
+      return;
+    }
     setIsUploading(true);
     setProgress(30);
-    setTimeout(() => setProgress(75), 300);
-    setTimeout(async () => {
-      setProgress(100);
+
+    // In a real implementation, you would get the file from a file input
+    // For now, we'll simulate with a mock file
+    const mockFile = new File(
+      [new ArrayBuffer(1024 * 1024 * 1.5)],
+      `${reportTitle}.pdf`,
+      { type: "application/pdf" }
+    );
+
+    try {
+      setProgress(75);
       await reportsService.uploadReport(
-        { name: `${reportTitle}.pdf`, size: 1024 * 1024 * 1.5, type: "application/pdf" },
+        { name: mockFile.name, size: mockFile.size, type: mockFile.type },
         {
           title: reportTitle,
           category: (selectedCategory === "all" ? "lab_report" : selectedCategory) as DocumentCategory,
           institutionName: institution || "Metropolitan Clinical Laboratories",
           documentDate: new Date().toISOString().split("T")[0],
-        }
+        },
+        user.id
       );
+      setProgress(100);
       setIsUploading(false);
       setUploadOpen(false);
       setReportTitle("");
       setInstitution("");
       setProgress(0);
       toast.success("Document uploaded and lab extraction completed!");
-    }, 800);
+    } catch (error) {
+      setIsUploading(false);
+      setProgress(0);
+      toast.error("Failed to upload document");
+      console.error(error);
+    }
   };
 
   const getCategoryStyles = (category: string) => categoryStyles[category] || categoryStyles.all;

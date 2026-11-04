@@ -19,3 +19,4 @@ export { notificationsRepository } from './notifications';
 export { healthInsightsRepository } from './healthInsights';
 export { carePlansRepository } from './carePlans';
 export { extractedLabResultsRepository } from './extractedLabResults';
+export { documentEmbeddingsRepository } from './documentEmbeddings';

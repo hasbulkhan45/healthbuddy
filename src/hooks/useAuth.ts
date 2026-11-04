@@ -23,12 +23,17 @@ export function useAuth() {
     getUser();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { user: User } | null) => {
       setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  return { user, loading };
+  const signOut = async () => {
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
+  };
+
+  return { user, loading, signOut };
 }

@@ -16,6 +16,8 @@ import {
   SymptomAnalysisResult,
   CarePlanGenerationResult,
   AIMessageContent,
+  AIEmbeddingOptions,
+  AIEmbeddingResponse,
 } from './types';
 
 export class MockAIProvider extends BaseAIProvider {
@@ -98,6 +100,25 @@ export class MockAIProvider extends BaseAIProvider {
 
   estimateCost(usage: AIUsage): number {
     return 0;
+  }
+
+  async createEmbedding(text: string, options?: AIEmbeddingOptions): Promise<AIEmbeddingResponse> {
+    // Generate a deterministic mock embedding based on the text
+    const dimensions = options?.dimensions ?? 1536;
+    const embedding = new Array(dimensions).fill(0).map((_, i) => {
+      const hash = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return Math.sin(hash + i) * 0.1;
+    });
+
+    // Normalize the embedding
+    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    const normalizedEmbedding = embedding.map(val => val / (magnitude || 1));
+
+    return {
+      data: [{ embedding: normalizedEmbedding, index: 0, object: 'embedding' }],
+      usage: { promptTokens: Math.ceil(text.length / 4), totalTokens: Math.ceil(text.length / 4) },
+      model: options?.model ?? 'mock-embedding-v1',
+    };
   }
 
   private generateMockResponse(userMessage: string, systemPrompt: string): string {

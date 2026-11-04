@@ -12,6 +12,8 @@ import {
   AIStreamChunk,
   AIMessage,
   AIUsage,
+  AIEmbeddingOptions,
+  AIEmbeddingResponse,
 } from './types';
 import { BaseAIProvider } from './baseProvider';
 import { MockAIProvider, mockAIProvider } from './mockProvider';
@@ -202,6 +204,14 @@ export class AIProviderFactory {
   estimateCost(usage: AIUsage, providerName?: AIProvider): number {
     const provider = this.getProvider(providerName);
     return provider.estimateCost(usage);
+  }
+
+  async createEmbedding(
+    text: string,
+    options?: AIEmbeddingOptions & { provider?: AIProvider }
+  ): Promise<AIEmbeddingResponse> {
+    const provider = this.getProvider(options?.provider);
+    return provider.createEmbedding(text, options);
   }
 
   getDefaultProvider(): AIProvider {

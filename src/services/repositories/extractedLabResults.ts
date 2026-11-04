@@ -41,10 +41,10 @@ export class ExtractedLabResultsRepository extends BaseRepository<'extracted_lab
 
   async updateExtractionStatus(
     resultId: string,
-    status: ExtractedLabResultRow['extraction_status'],
+    status: ExtractedLabResultRow['extractionStatus'],
     userNotes?: string
   ): Promise<ExtractedLabResultRow | null> {
-    const updates: ExtractedLabResultUpdate = { extraction_status: status };
+    const updates: ExtractedLabResultUpdate = { extractionStatus: status };
     if (userNotes) updates.notes = userNotes;
     return this.update(resultId, updates);
   }

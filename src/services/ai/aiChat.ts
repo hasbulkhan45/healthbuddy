@@ -1,9 +1,10 @@
 /**
- * AI Chat Service - Conversational health assistant
+ * AI Chat Service - Conversational health assistant with RAG
  */
 
 import { aiProviderFactory } from '@/lib/ai';
 import { profilesRepository, aiMessagesRepository, aiConversationsRepository } from '@/services/repositories';
+import { embeddingsService } from '@/services/ai';
 import type {
   AIMessage,
   AICompletionOptions,
@@ -33,12 +34,23 @@ function extractTextContent(content: AIMessageContent): string {
     .join('');
 }
 
+function buildRagContext(results: Array<{ text: string; metadata: Record<string, unknown>; similarity: number }>): string {
+  if (results.length === 0) return '';
+
+  const parts = ['Relevant information from your health records:'];
+  for (const result of results) {
+    const source = result.metadata.documentType ?? 'unknown';
+    parts.push(`[${source}, similarity: ${result.similarity.toFixed(2)}] ${result.text}`);
+  }
+  return parts.join('\n\n');
+}
+
 export class AIChatService {
   async sendMessage(
     userId: string,
     content: string,
     conversationId?: string,
-    options?: AICompletionOptions
+    options?: AICompletionOptions & { useRag?: boolean }
   ): Promise<{ response: string; conversationId: string }> {
     let convId = conversationId;
 
@@ -71,7 +83,21 @@ export class AIChatService {
 
     // Get user profile for context
     const profile = await profilesRepository.getCurrentUserProfile();
-    const context = this.buildUserContext(profile);
+    const userContext = this.buildUserContext(profile);
+
+    // Retrieve relevant context using RAG if enabled
+    let ragContext = '';
+    if (options?.useRag !== false) {
+      try {
+        const ragResults = await embeddingsService.search(userId, content, {
+          limit: 5,
+          threshold: 0.65,
+        });
+        ragContext = buildRagContext(ragResults);
+      } catch (error) {
+        console.warn('RAG search failed:', error);
+      }
+    }
 
     // Add user message
     await aiMessagesRepository.addUserMessage(convId, content, userId);
@@ -79,9 +105,12 @@ export class AIChatService {
     // Get conversation history
     const history = await aiMessagesRepository.findRecentByConversation(convId, 20);
 
+    // Build system prompt with user context and RAG context
+    const systemPrompt = `${SYSTEM_PROMPT}\n\nUser Context:\n${userContext}${ragContext ? `\n\n${ragContext}` : ''}`;
+
     // Build messages for AI
     const messages: AIMessage[] = [
-      { role: 'system', content: `${SYSTEM_PROMPT}\n\nUser Context:\n${context}` },
+      { role: 'system', content: systemPrompt },
       ...history.map((m) => ({ role: m.sender as 'user' | 'assistant', content: m.content })),
       { role: 'user', content },
     ];
@@ -109,7 +138,7 @@ export class AIChatService {
     userId: string,
     content: string,
     conversationId?: string,
-    options?: AICompletionOptions
+    options?: AICompletionOptions & { useRag?: boolean }
   ): AsyncIterable<{ chunk: string; conversationId: string; done: boolean }> {
     let convId = conversationId;
 
@@ -140,14 +169,30 @@ export class AIChatService {
     }
 
     const profile = await profilesRepository.getCurrentUserProfile();
-    const context = this.buildUserContext(profile);
+    const userContext = this.buildUserContext(profile);
+
+    // Retrieve relevant context using RAG if enabled
+    let ragContext = '';
+    if (options?.useRag !== false) {
+      try {
+        const ragResults = await embeddingsService.search(userId, content, {
+          limit: 5,
+          threshold: 0.65,
+        });
+        ragContext = buildRagContext(ragResults);
+      } catch (error) {
+        console.warn('RAG search failed:', error);
+      }
+    }
 
     await aiMessagesRepository.addUserMessage(convId, content, userId);
 
     const history = await aiMessagesRepository.findRecentByConversation(convId, 20);
 
+    const systemPrompt = `${SYSTEM_PROMPT}\n\nUser Context:\n${userContext}${ragContext ? `\n\n${ragContext}` : ''}`;
+
     const messages: AIMessage[] = [
-      { role: 'system', content: `${SYSTEM_PROMPT}\n\nUser Context:\n${context}` },
+      { role: 'system', content: systemPrompt },
       ...history.map((m) => ({ role: m.sender as 'user' | 'assistant', content: m.content })),
       { role: 'user', content },
     ];

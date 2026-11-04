@@ -100,6 +100,7 @@ export type MedicalRecordVerificationStatus =
 
 export interface ExtractedLabResult {
   id: string;
+  recordId: string;
   testName: string;
   resultValue: string;
   unit: string;
@@ -109,6 +110,8 @@ export interface ExtractedLabResult {
   extractionStatus: 'extracted' | 'user_confirmed' | 'rejected' | 'flagged';
   confidence: number;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MedicalRecord {
@@ -448,6 +451,29 @@ export interface CarePlan {
   updated_at: string;
 }
 
+export type DocumentEmbeddingType =
+  | 'medical_record'
+  | 'prescription'
+  | 'lab_result'
+  | 'symptom'
+  | 'medication'
+  | 'appointment'
+  | 'care_plan'
+  | 'health_insight';
+
+export interface DocumentEmbedding {
+  id: string;
+  userId: string;
+  documentType: DocumentEmbeddingType;
+  documentId: string;
+  chunkIndex: number;
+  chunkText: string;
+  embedding: number[] | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Database schema type for Supabase
 export interface Database {
   public: {
@@ -479,8 +505,8 @@ export interface Database {
       };
       extracted_lab_results: {
         Row: ExtractedLabResult;
-        Insert: Omit<ExtractedLabResult, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<ExtractedLabResult, 'id' | 'record_id' | 'created_at'>>;
+        Insert: Omit<ExtractedLabResult, 'id' | 'createdAt' | 'updatedAt'>;
+        Update: Partial<Omit<ExtractedLabResult, 'id' | 'recordId' | 'createdAt'>>;
       };
       medications: {
         Row: Medication;
@@ -546,6 +572,11 @@ export interface Database {
         Row: CarePlan;
         Insert: Omit<CarePlan, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<CarePlan, 'id' | 'user_id' | 'created_at'>>;
+      };
+      document_embeddings: {
+        Row: DocumentEmbedding;
+        Insert: Omit<DocumentEmbedding, 'id' | 'createdAt' | 'updatedAt'>;
+        Update: Partial<Omit<DocumentEmbedding, 'id' | 'userId' | 'createdAt'>>;
       };
     };
   };

@@ -12,6 +12,8 @@ import {
   AIUsage,
   AIModelInfo,
   AIMessageContent,
+  AIEmbeddingOptions,
+  AIEmbeddingResponse,
 } from './types';
 
 export abstract class BaseAIProvider implements AIProviderInterface {
@@ -31,6 +33,7 @@ export abstract class BaseAIProvider implements AIProviderInterface {
 
   abstract complete(messages: AIMessage[], options?: AICompletionOptions): Promise<AICompletionResponse>;
   abstract completeStream(messages: AIMessage[], options?: AICompletionOptions): AsyncIterable<AIStreamChunk>;
+  abstract createEmbedding(text: string, options?: AIEmbeddingOptions): Promise<AIEmbeddingResponse>;
 
   async countTokens(messages: AIMessage[]): Promise<number> {
     let total = 0;

@@ -25,7 +25,7 @@ function mapDBRecordToMedicalRecord(dbRecord: DBMedicalRecord, labResults: DBExt
     category: dbRecord.category as DocumentCategory,
     categoryLabel: dbRecord.category_label ?? dbRecord.category.replace(/_/g, ' ').toUpperCase(),
     institutionName: dbRecord.institution_name ?? 'Unknown Institution',
-    physicianName: dbRecord.physician_name ?? undefined,
+    physicianName: undefined, // Not in DB schema
     documentDate: dbRecord.document_date ?? new Date().toISOString().split('T')[0],
     uploadedAt: dbRecord.uploaded_at ?? dbRecord.created_at,
     fileSize: dbRecord.file_size ?? '0 MB',
@@ -33,7 +33,7 @@ function mapDBRecordToMedicalRecord(dbRecord: DBMedicalRecord, labResults: DBExt
     verificationStatus: mapVerificationStatus(dbRecord.verification_status),
     summary: dbRecord.summary ?? 'No summary available',
     extractedResults: labResults.map(mapDBLabResult),
-    previewUrl: dbRecord.file_path ?? dbRecord.preview_url ?? undefined,
+    previewUrl: dbRecord.file_path ?? undefined,
     aiExplanation: undefined,
   };
 }
@@ -41,13 +41,13 @@ function mapDBRecordToMedicalRecord(dbRecord: DBMedicalRecord, labResults: DBExt
 function mapDBLabResult(dbResult: DBExtractedLabResult): ExtractedLabResult {
   return {
     id: dbResult.id,
-    testName: dbResult.test_name,
-    resultValue: dbResult.result_value,
+    testName: dbResult.testName,
+    resultValue: dbResult.resultValue,
     unit: dbResult.unit,
-    referenceRange: dbResult.reference_range,
+    referenceRange: dbResult.referenceRange,
     status: dbResult.status as 'normal' | 'borderline' | 'abnormal',
-    statusLabel: dbResult.status_label ?? dbResult.status,
-    extractionStatus: mapExtractionStatus(dbResult.extraction_status),
+    statusLabel: dbResult.statusLabel ?? dbResult.status,
+    extractionStatus: mapExtractionStatus(dbResult.extractionStatus),
     userNotes: dbResult.notes ?? undefined,
   };
 }
@@ -67,7 +67,7 @@ function mapVerificationStatus(status: DBMedicalRecord['verification_status']): 
   }
 }
 
-function mapExtractionStatus(status: DBExtractedLabResult['extraction_status']): ExtractionStatus {
+function mapExtractionStatus(status: DBExtractedLabResult['extractionStatus']): ExtractionStatus {
   switch (status) {
     case 'user_confirmed':
       return 'user_confirmed';
@@ -150,6 +150,7 @@ export const reportsService = {
       summary: ocrResult.rawText.slice(0, 500) ?? 'Document uploaded and processed',
       extracted_results: ocrResult.structuredData as any,
       raw_text: ocrResult.rawText,
+      uploaded_at: new Date().toISOString(),
     });
 
     if (!dbRecord) {
@@ -159,16 +160,18 @@ export const reportsService = {
     // Save extracted lab results
     if (ocrResult.structuredData.labValues && ocrResult.structuredData.labValues.length > 0) {
       for (const labValue of ocrResult.structuredData.labValues) {
+        const status = mapHealthMetricStatus(labValue.value, labValue.referenceRange);
         await extractedLabResultsRepository.create({
-          record_id: dbRecord.id,
-          test_name: labValue.test,
-          result_value: String(labValue.value),
+          recordId: dbRecord.id,
+          testName: labValue.test,
+          resultValue: String(labValue.value),
           unit: labValue.unit,
-          reference_range: labValue.referenceRange,
-          status: mapHealthMetricStatus(labValue.value, labValue.referenceRange),
-          status_label: mapHealthMetricStatus(labValue.value, labValue.referenceRange),
-          extraction_status: 'extracted',
+          referenceRange: labValue.referenceRange,
+          status: status,
+          statusLabel: status,
+          extractionStatus: 'extracted',
           confidence: ocrResult.confidence,
+          notes: null,
         });
       }
     }
@@ -185,13 +188,13 @@ export const reportsService = {
     if (!dbRecord || dbRecord.user_id !== userId) return false;
 
     const updated = await extractedLabResultsRepository.update(resultId, {
-      extraction_status: 'user_confirmed',
+      extractionStatus: 'user_confirmed',
     });
 
     if (updated) {
       // Check if all results are confirmed, then update record status
       const allResults = await extractedLabResultsRepository.findByRecordId(recordId);
-      const allConfirmed = allResults.every(r => r.extraction_status === 'user_confirmed');
+      const allConfirmed = allResults.every(r => r.extractionStatus === 'user_confirmed');
 
       if (allConfirmed) {
         await medicalRecordsRepository.update(recordId, {
@@ -212,7 +215,7 @@ export const reportsService = {
   },
 };
 
-function mapHealthMetricStatus(value: number, referenceRange: string): 'normal' | 'borderline' | 'abnormal' {
+function mapHealthMetricStatus(value: number, referenceRange: string): 'normal' | 'borderline' | 'high' | 'low' | 'critical' {
   // Simple parsing of reference range like "70 – 100" or "70-100"
   const match = referenceRange.match(/(\d+(?:\.\d+)?)\s*[–-]\s*(\d+(?:\.\d+)?)/);
   if (!match) return 'normal';
@@ -220,7 +223,8 @@ function mapHealthMetricStatus(value: number, referenceRange: string): 'normal' 
   const min = parseFloat(match[1]);
   const max = parseFloat(match[2]);
 
-  if (value < min * 0.8 || value > max * 1.2) return 'abnormal';
+  if (value < min * 0.5 || value > max * 2) return 'critical';
+  if (value < min * 0.8 || value > max * 1.2) return value < min ? 'low' : 'high';
   if (value < min || value > max) return 'borderline';
   return 'normal';
 }

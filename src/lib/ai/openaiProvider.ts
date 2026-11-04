@@ -13,6 +13,8 @@ import {
   AIProviderConfig,
   AIMessageContent,
   AIMessageContentPart,
+  AIEmbeddingOptions,
+  AIEmbeddingResponse,
 } from './types';
 
 interface OpenAIMessage {
@@ -300,5 +302,44 @@ export class OpenAIProvider extends BaseAIProvider {
     const inputCost = (usage.promptTokens / 1000) * modelInfo.inputCostPer1k;
     const outputCost = (usage.completionTokens / 1000) * modelInfo.outputCostPer1k;
     return inputCost + outputCost;
+  }
+
+  async createEmbedding(text: string, options?: AIEmbeddingOptions): Promise<AIEmbeddingResponse> {
+    if (!this.isAvailable) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    const model = options?.model ?? 'text-embedding-3-small';
+    const dimensions = options?.dimensions ?? 1536;
+
+    const response = await fetch(`${this.baseURL}/embeddings`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        model,
+        input: text,
+        dimensions: model === 'text-embedding-3-small' || model === 'text-embedding-3-large' ? dimensions : undefined,
+        encoding_format: options?.encodingFormat ?? 'float',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI Embeddings API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return {
+      data: data.data.map((d: any, index: number) => ({
+        embedding: d.embedding,
+        index,
+        object: 'embedding',
+      })),
+      usage: {
+        promptTokens: data.usage.prompt_tokens,
+        totalTokens: data.usage.total_tokens,
+      },
+      model: data.model,
+    };
   }
 }
