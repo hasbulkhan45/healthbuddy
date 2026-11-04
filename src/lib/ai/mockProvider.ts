@@ -15,6 +15,7 @@ import {
   PrescriptionExtractionResult,
   SymptomAnalysisResult,
   CarePlanGenerationResult,
+  AIMessageContent,
 } from './types';
 
 export class MockAIProvider extends BaseAIProvider {
@@ -42,9 +43,17 @@ export class MockAIProvider extends BaseAIProvider {
     ];
   }
 
+  private extractTextContent(content: AIMessageContent): string {
+    if (typeof content === 'string') return content;
+    return content
+      .filter(part => part.type === 'text')
+      .map(part => part.text ?? '')
+      .join(' ');
+  }
+
   async complete(messages: AIMessage[], options?: AICompletionOptions): Promise<AICompletionResponse> {
-    const lastMessage = messages[messages.length - 1]?.content ?? '';
-    const systemPrompt = messages.find(m => m.role === 'system')?.content ?? '';
+    const lastMessage = this.extractTextContent(messages[messages.length - 1]?.content ?? '');
+    const systemPrompt = this.extractTextContent(messages.find(m => m.role === 'system')?.content ?? '');
 
     let responseContent = this.generateMockResponse(lastMessage, systemPrompt);
     const promptTokens = await this.countTokens(messages);
@@ -62,8 +71,8 @@ export class MockAIProvider extends BaseAIProvider {
   }
 
   async *completeStream(messages: AIMessage[], options?: AICompletionOptions): AsyncIterable<AIStreamChunk> {
-    const lastMessage = messages[messages.length - 1]?.content ?? '';
-    const systemPrompt = messages.find(m => m.role === 'system')?.content ?? '';
+    const lastMessage = this.extractTextContent(messages[messages.length - 1]?.content ?? '');
+    const systemPrompt = this.extractTextContent(messages.find(m => m.role === 'system')?.content ?? '');
     const responseContent = this.generateMockResponse(lastMessage, systemPrompt);
 
     const words = responseContent.split(' ');

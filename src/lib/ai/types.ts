@@ -4,9 +4,18 @@
 
 export type AIProvider = 'openai' | 'anthropic' | 'mock';
 
+export type AIMessageContent = string | AIMessageContentPart[];
+
+export interface AIMessageContentPart {
+  type: 'text' | 'image_url' | 'file';
+  text?: string;
+  image_url?: { url: string; detail?: 'low' | 'high' | 'auto' };
+  file?: { url: string; filename?: string };
+}
+
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string;
+  content: AIMessageContent;
   name?: string;
   tool_calls?: AIToolCall[];
   tool_call_id?: string;

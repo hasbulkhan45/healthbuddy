@@ -6,7 +6,16 @@ import { aiProviderFactory } from '@/lib/ai';
 import type {
   AIMessage,
   SymptomAnalysisResult,
+  AIMessageContent,
 } from '@/lib/ai/types';
+
+function extractTextContent(content: AIMessageContent): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter(part => part.type === 'text')
+    .map(part => part.text ?? '')
+    .join('');
+}
 
 const SYSTEM_PROMPT = `You are a medical symptom analysis assistant. Analyze user-reported symptoms and provide structured guidance.
 
@@ -70,7 +79,7 @@ export class SymptomAnalysisService {
     });
 
     try {
-      return JSON.parse(response.choices[0].message.content) as SymptomAnalysisResult;
+      return JSON.parse(extractTextContent(response.choices[0].message.content)) as SymptomAnalysisResult;
     } catch (error) {
       console.error('Failed to parse symptom analysis:', error);
       return this.getFallbackResult();

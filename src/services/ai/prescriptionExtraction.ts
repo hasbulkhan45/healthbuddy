@@ -7,7 +7,16 @@ import type {
   AIMessage,
   PrescriptionExtractionResult,
   ExtractedMedicine,
+  AIMessageContent,
 } from '@/lib/ai/types';
+
+function extractTextContent(content: AIMessageContent): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter(part => part.type === 'text')
+    .map(part => part.text ?? '')
+    .join('');
+}
 
 const SYSTEM_PROMPT = `You are a medical prescription extraction specialist. Extract structured data from prescription text/OCR output.
 
@@ -58,7 +67,7 @@ export class PrescriptionExtractionService {
     });
 
     try {
-      const result = JSON.parse(response.choices[0].message.content) as PrescriptionExtractionResult;
+      const result = JSON.parse(extractTextContent(response.choices[0].message.content)) as PrescriptionExtractionResult;
       return {
         ...result,
         rawText: text,
@@ -87,7 +96,7 @@ export class PrescriptionExtractionService {
     });
 
     try {
-      return JSON.parse(response.choices[0].message.content) as PrescriptionExtractionResult;
+      return JSON.parse(extractTextContent(response.choices[0].message.content)) as PrescriptionExtractionResult;
     } catch {
       return this.getFallbackResult('');
     }

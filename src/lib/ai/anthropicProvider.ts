@@ -11,11 +11,12 @@ import {
   AIUsage,
   AIModelInfo,
   AIProviderConfig,
+  AIMessageContent,
 } from './types';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
-  content: string | Array<{ type: 'text'; text: string } | { type: 'tool_use'; id: string; name: string; input: any } | { type: 'tool_result'; tool_use_id: string; content: string }>;
+  content: string | Array<{ type: 'text'; text: string } | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } } | { type: 'tool_use'; id: string; name: string; input: any } | { type: 'tool_result'; tool_use_id: string; content: string }>;
 }
 
 interface AnthropicTool {
@@ -114,12 +115,40 @@ export class AnthropicProvider extends BaseAIProvider {
     const otherMessages = messages.filter(m => m.role !== 'system');
 
     return {
-      system: systemMessage?.content,
+      system: typeof systemMessage?.content === 'string' ? systemMessage.content : undefined,
       messages: otherMessages.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content,
+        content: this.convertContent(msg.content),
       })),
     };
+  }
+
+  private convertContent(content: AIMessageContent): AnthropicMessage['content'] {
+    if (typeof content === 'string') return content;
+    if (!content || content.length === 0) return '';
+
+    return content.map(part => {
+      if (part.type === 'text') {
+        return { type: 'text', text: part.text ?? '' };
+      } else if (part.type === 'image_url') {
+        // Convert data URL to base64 for Anthropic
+        const url = part.image_url?.url ?? '';
+        const base64Match = url.match(/^data:([^;]+);base64,(.+)$/);
+        if (base64Match) {
+          return {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: base64Match[1],
+              data: base64Match[2],
+            },
+          };
+        }
+        // For regular URLs, we'd need to fetch and convert - for now return text placeholder
+        return { type: 'text', text: `[Image: ${url}]` };
+      }
+      return { type: 'text', text: `[File: ${(part as any).file?.url ?? 'unknown'}]` };
+    });
   }
 
   private convertTools(tools?: AICompletionOptions['tools']): AnthropicTool[] | undefined {

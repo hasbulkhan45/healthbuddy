@@ -7,6 +7,7 @@ import { profilesRepository, aiMessagesRepository, aiConversationsRepository } f
 import type {
   AIMessage,
   AICompletionOptions,
+  AIMessageContent,
 } from '@/lib/ai/types';
 
 const SYSTEM_PROMPT = `You are HealthBuddy, a helpful and knowledgeable AI health assistant. You help users understand their health data, medications, symptoms, and wellness goals.
@@ -23,6 +24,14 @@ Guidelines:
 If the user asks about specific medical advice, respond with: "I'm an AI assistant, not a doctor. For medical advice, diagnosis, or treatment decisions, please consult a qualified healthcare professional."
 
 You have access to the user's health context (provided in the conversation). Use it to personalize responses.`;
+
+function extractTextContent(content: AIMessageContent): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter(part => part.type === 'text')
+    .map(part => part.text ?? '')
+    .join('');
+}
 
 export class AIChatService {
   async sendMessage(
@@ -84,7 +93,7 @@ export class AIChatService {
       maxTokens: options?.maxTokens ?? 1000,
     });
 
-    const assistantResponse = response.choices[0].message.content;
+    const assistantResponse = extractTextContent(response.choices[0].message.content);
 
     // Save assistant message
     await aiMessagesRepository.addAssistantMessage(convId, assistantResponse, userId);
@@ -150,9 +159,10 @@ export class AIChatService {
       maxTokens: options?.maxTokens ?? 1000,
     })) {
       const delta = chunk.choices[0]?.delta?.content ?? '';
-      if (delta) {
-        fullResponse += delta;
-        yield { chunk: delta, conversationId: convId, done: false };
+      const deltaText = typeof delta === 'string' ? delta : extractTextContent(delta);
+      if (deltaText) {
+        fullResponse += deltaText;
+        yield { chunk: deltaText, conversationId: convId, done: false };
       }
       if (chunk.choices[0]?.finishReason) {
         break;

@@ -6,7 +6,16 @@ import { aiProviderFactory } from '@/lib/ai';
 import type {
   AIMessage,
   CarePlanGenerationResult,
+  AIMessageContent,
 } from '@/lib/ai/types';
+
+function extractTextContent(content: AIMessageContent): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter(part => part.type === 'text')
+    .map(part => part.text ?? '')
+    .join('');
+}
 
 const SYSTEM_PROMPT = `You are a healthcare care plan generator. Create personalized care plans based on user health data.
 
@@ -105,7 +114,7 @@ export class CarePlanGenerationService {
     });
 
     try {
-      return JSON.parse(response.choices[0].message.content) as CarePlanGenerationResult;
+      return JSON.parse(extractTextContent(response.choices[0].message.content)) as CarePlanGenerationResult;
     } catch (error) {
       console.error('Failed to parse care plan generation:', error);
       return this.getFallbackPlan(data);
@@ -131,7 +140,7 @@ export class CarePlanGenerationService {
     });
 
     try {
-      return JSON.parse(response.choices[0].message.content) as CarePlanGenerationResult;
+      return JSON.parse(extractTextContent(response.choices[0].message.content)) as CarePlanGenerationResult;
     } catch {
       return this.getFallbackPlan({});
     }

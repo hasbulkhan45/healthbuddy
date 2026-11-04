@@ -5,6 +5,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerAnonClient } from '@/lib/supabase/server';
 import { prescriptionExtractionService } from '@/services/ai';
+import { ocrService } from '@/services/ocr';
+import { documentStorageService } from '@/services/storage';
 import { prescriptionsRepository, prescriptionMedicinesRepository } from '@/services/repositories';
 import type { PrescriptionExtractionResult, ExtractedMedicine } from '@/lib/ai/types';
 
@@ -22,11 +24,22 @@ export async function POST(request: NextRequest) {
     const text = formData.get('text') as string | null;
 
     let extractedText = text;
+    let uploadResult = null;
+    let ocrResult = null;
 
+    // Handle file upload and OCR
     if (file && !extractedText) {
-      // In a real implementation, you would use OCR here
-      // For now, we'll simulate OCR with a placeholder
-      extractedText = `[OCR would extract text from ${file.name} (${file.type}, ${file.size} bytes)]`;
+      // Upload file to Supabase Storage
+      uploadResult = await documentStorageService.uploadFile(file, user.id);
+
+      // Extract text using OCR
+      const fileBuffer = await file.arrayBuffer();
+      ocrResult = await ocrService.extractFromFile(fileBuffer, file.type, {
+        enhanceForMedical: true,
+        provider: 'mock', // Use mock for now, can be changed to 'openai' or 'anthropic'
+      });
+
+      extractedText = ocrResult.text;
     }
 
     if (!extractedText) {
@@ -42,7 +55,7 @@ export async function POST(request: NextRequest) {
     // Save prescription to database - match Prescription Insert schema
     const prescription = await prescriptionsRepository.create({
       user_id: user.id,
-      document_id: file ? crypto.randomUUID() : null,
+      document_id: uploadResult ? crypto.randomUUID() : null,
       document_name: file?.name ?? null,
       doctor_name: extractionResult.doctorName ?? null,
       doctor_specialty: null,
@@ -56,12 +69,12 @@ export async function POST(request: NextRequest) {
       general_instructions: extractionResult.instructions ? [extractionResult.instructions] : [],
       extracted_fields: extractionResult as any,
       file_type: file?.type ?? null,
-      preview_url: file ? `uploads/${file.name}` : null,
+      preview_url: uploadResult?.url ?? (file ? `uploads/${file.name}` : null),
       verification_status: validation.valid ? 'user_confirmed' : 'needs_review',
       workflow_stage: validation.valid ? 'confirmed' : 'needs_review',
       requires_user_review: !validation.valid,
-      ocr_provider: 'mock',
-      ocr_confidence: extractionResult.confidence,
+      ocr_provider: ocrResult?.provider ?? 'mock',
+      ocr_confidence: ocrResult?.confidence ?? extractionResult.confidence,
       ocr_warnings: validation.errors ?? [],
     });
 
@@ -99,6 +112,15 @@ export async function POST(request: NextRequest) {
       prescription,
       extraction: extractionResult,
       validation,
+      ocr: ocrResult ? {
+        provider: ocrResult.provider,
+        confidence: ocrResult.confidence,
+        pages: ocrResult.pages,
+      } : null,
+      storage: uploadResult ? {
+        path: uploadResult.path,
+        url: uploadResult.url,
+      } : null,
     });
   } catch (error) {
     console.error('Prescription extraction error:', error);

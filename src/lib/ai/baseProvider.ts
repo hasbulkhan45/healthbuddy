@@ -11,6 +11,7 @@ import {
   AIStreamChunk,
   AIUsage,
   AIModelInfo,
+  AIMessageContent,
 } from './types';
 
 export abstract class BaseAIProvider implements AIProviderInterface {
@@ -39,8 +40,21 @@ export abstract class BaseAIProvider implements AIProviderInterface {
     return total;
   }
 
-  protected estimateTokens(text: string): number {
-    return Math.ceil(text.length / 4);
+  protected estimateTokens(content: AIMessageContent): number {
+    if (typeof content === 'string') {
+      return Math.ceil(content.length / 4);
+    }
+    // For array content, estimate tokens for each part
+    let total = 0;
+    for (const part of content) {
+      if (part.type === 'text' && part.text) {
+        total += Math.ceil(part.text.length / 4);
+      } else if (part.type === 'image_url' || part.type === 'file') {
+        // Rough estimate for images/files
+        total += 1000;
+      }
+    }
+    return total;
   }
 
   abstract estimateCost(usage: AIUsage): number;

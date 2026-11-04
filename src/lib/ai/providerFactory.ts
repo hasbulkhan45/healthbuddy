@@ -213,6 +213,10 @@ export class AIProviderFactory {
       this.defaultProvider = name;
     }
   }
+
+  hasConfiguredProvider(): boolean {
+    return this.getAvailableProviders().some(p => p !== 'mock');
+  }
 }
 
 export const aiProviderFactory = new AIProviderFactory();

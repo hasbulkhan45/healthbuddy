@@ -11,11 +11,13 @@ import {
   AIUsage,
   AIModelInfo,
   AIProviderConfig,
+  AIMessageContent,
+  AIMessageContentPart,
 } from './types';
 
 interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string | null;
+  content: string | null | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string; detail?: string } }>;
   name?: string;
   tool_calls?: Array<{
     id: string;
@@ -116,11 +118,27 @@ export class OpenAIProvider extends BaseAIProvider {
   private convertMessages(messages: AIMessage[]): OpenAIMessage[] {
     return messages.map(msg => ({
       role: msg.role,
-      content: msg.content,
+      content: this.convertContent(msg.content),
       name: msg.name,
       tool_calls: msg.tool_calls,
       tool_call_id: msg.tool_call_id,
     }));
+  }
+
+  private convertContent(content: AIMessageContent): OpenAIMessage['content'] {
+    if (typeof content === 'string') return content;
+    if (!content || content.length === 0) return null;
+
+    return content.map(part => {
+      if (part.type === 'text') {
+        return { type: 'text', text: part.text ?? '' };
+      } else if (part.type === 'image_url') {
+        const detail = (part.image_url?.detail as 'low' | 'high' | 'auto') ?? 'auto';
+        return { type: 'image_url', image_url: { url: part.image_url?.url ?? '', detail } };
+      }
+      // For file type, treat as image_url for OpenAI
+      return { type: 'image_url', image_url: { url: (part as any).file?.url ?? '', detail: 'auto' as const } };
+    });
   }
 
   private convertTools(tools?: AICompletionOptions['tools']): any[] | undefined {
@@ -243,7 +261,7 @@ export class OpenAIProvider extends BaseAIProvider {
             role: choice.message.role,
             content: choice.message.content ?? '',
             tool_calls: choice.message.tool_calls,
-          },
+          } as AIMessage,
           finishReason: choice.finish_reason as AICompletionResponse['choices'][0]['finishReason'],
         },
       ],
