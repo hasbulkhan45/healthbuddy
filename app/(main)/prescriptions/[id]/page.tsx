@@ -17,15 +17,24 @@ export default function PrescriptionDetailPage() {
   const [prescription, setPrescription] = useState<Prescription | null>(null);
   const [medicines, setMedicines] = useState<PrescriptionMedicine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const load = () => {
     if (!id) return;
-    prescriptionService.getPrescription(id).then((item) => {
-      setPrescription(item || null);
-      setLoading(false);
-    });
+    setLoading(true);
+    setError(null);
+    prescriptionService
+      .getPrescription(id)
+      .then((item) => {
+        setPrescription(item || null);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load prescription");
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -34,14 +43,51 @@ export default function PrescriptionDetailPage() {
     return unsub;
   }, [id]);
 
-  useEffect(() => {
-    if (prescription) {
-      setMedicines([]);
-    }
-  }, [prescription]);
+  // Compute medicinePlaceholder at top level - always called, handles null prescription safely
+  const medicinePlaceholder = useMemo(
+    () =>
+      prescription && prescription.verificationStatus === "user_confirmed"
+        ? [{
+            id: `${prescription.id}-med-placeholder`,
+            prescriptionId: prescription.id,
+            medicineName: "Confirmed medication",
+            strength: "As prescribed",
+            dosage: "1",
+            dosageUnit: "dose",
+            frequency: "As directed",
+            route: "Oral",
+            timing: "Per instructions",
+            beforeOrAfterFood: "As directed",
+            duration: "Course duration per prescription",
+            startDate: prescription.prescriptionDate || new Date().toISOString().split("T")[0],
+            endDate: prescription.followUpDate || prescription.visitDate || "",
+            additionalInstructions: prescription.generalInstructions.join(" ") || "Follow instructions from prescriber.",
+            extractionConfidence: 0.9,
+            verificationStatus: "user_confirmed" as const,
+            isAsNeeded: false,
+          }] as PrescriptionMedicine[]
+        : [],
+    [prescription]
+  );
 
+  // Sync medicines with medicinePlaceholder - always called
+  useEffect(() => {
+    setMedicines(medicinePlaceholder);
+  }, [medicinePlaceholder]);
+
+  // Early returns AFTER all hooks
   if (loading) {
     return <div className="mx-auto max-w-7xl px-4 py-12 text-center text-xs text-slate-500">Loading prescription details...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 text-center space-y-3">
+        <p className="text-sm font-semibold text-slate-800">Failed to load prescription</p>
+        <p className="text-xs text-slate-500">{error}</p>
+        <Button size="sm" onClick={load}>Retry</Button>
+      </div>
+    );
   }
 
   if (!prescription) {
@@ -64,36 +110,6 @@ export default function PrescriptionDetailPage() {
     await prescriptionService.verifyPrescription(prescription.id, "needs_review");
     toast.info("Prescription marked for follow-up review.");
   };
-
-  const medicinePlaceholder = useMemo(
-    () =>
-      prescription && prescription.verificationStatus === "user_confirmed"
-        ? [{
-            id: `${prescription.id}-med-placeholder`,
-            prescriptionId: prescription.id,
-            medicineName: "Confirmed medication",
-            strength: "As prescribed",
-            dosage: "1",
-            dosageUnit: "dose",
-            frequency: "As directed",
-            route: "Oral",
-            timing: "Per instructions",
-            beforeOrAfterFood: "As directed",
-            duration: "Course duration per prescription",
-            startDate: prescription.prescriptionDate || new Date().toISOString().split("T")[0],
-            endDate: prescription.followUpDate || prescription.visitDate || "",
-            additionalInstructions: prescription.generalInstructions.join(" ") || "Follow instructions from prescriber.",
-            extractionConfidence: 0.9,
-            verificationStatus: "user_confirmed",
-            isAsNeeded: false,
-          }] as PrescriptionMedicine[]
-        : [],
-    [prescription]
-  );
-
-  useEffect(() => {
-    setMedicines(medicinePlaceholder);
-  }, [medicinePlaceholder]);
 
   return (
     <PageShell

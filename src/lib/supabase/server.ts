@@ -18,13 +18,13 @@ export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 export const hasServiceRoleKey = !!supabaseServiceRoleKey;
 
 // Create server client with anon key (respects RLS)
-export const createServerAnonClient = () => {
+export const createServerAnonClient = async () => {
   if (!isSupabaseConfigured) {
     console.warn('[Supabase Server] Demo mode: Supabase not configured');
     return createMockServerClient();
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
@@ -50,13 +50,13 @@ export const createServerAnonClient = () => {
 };
 
 // Create server client with service role key (bypasses RLS - admin only)
-export const createServerAdminClient = () => {
+export const createServerAdminClient = async () => {
   if (!hasServiceRoleKey) {
     console.warn('[Supabase Server] Service role key not configured. Admin operations unavailable.');
     return createMockServerClient();
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(supabaseUrl!, supabaseServiceRoleKey!, {
     cookies: {
@@ -130,7 +130,7 @@ function createMockServerClient() {
 
 // Get user from server-side session
 export const getServerUser = async () => {
-  const supabase = createServerAnonClient();
+  const supabase = await createServerAnonClient();
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) return null;
   return user;
@@ -138,7 +138,7 @@ export const getServerUser = async () => {
 
 // Get user profile from server
 export const getServerProfile = async (userId: string) => {
-  const supabase = createServerAnonClient();
+  const supabase = await createServerAnonClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('*')

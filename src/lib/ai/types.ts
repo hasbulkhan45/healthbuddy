@@ -91,6 +91,7 @@ export interface AIProviderInterface {
 
   countTokens(messages: AIMessage[]): Promise<number>;
   estimateCost(usage: AIUsage): number;
+  getAvailableModels(): AIModelInfo[];
 }
 
 export interface AIModelInfo {

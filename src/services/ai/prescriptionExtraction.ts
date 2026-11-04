@@ -95,13 +95,13 @@ export class PrescriptionExtractionService {
 
   private getFallbackResult(text: string): PrescriptionExtractionResult {
     return {
-      patientName: null,
-      doctorName: null,
-      clinicName: null,
-      prescriptionDate: null,
+      patientName: undefined,
+      doctorName: undefined,
+      clinicName: undefined,
+      prescriptionDate: undefined,
       medicines: [],
-      instructions: null,
-      followUpDate: null,
+      instructions: undefined,
+      followUpDate: undefined,
       rawText: text,
       confidence: 0,
     };

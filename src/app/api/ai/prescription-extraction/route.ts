@@ -3,14 +3,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerAnonClient } from '@/lib/supabase/server';
 import { prescriptionExtractionService } from '@/services/ai';
 import { prescriptionsRepository, prescriptionMedicinesRepository } from '@/services/repositories';
 import type { PrescriptionExtractionResult } from '@/lib/ai/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerAnonClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

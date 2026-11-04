@@ -40,26 +40,23 @@ export class AIMessagesRepository extends BaseRepository<'ai_messages'> {
     return (data as AIMessageRow[]).reverse();
   }
 
-  async addMessage(data: Omit<AIMessageInsert, 'user_id'>): Promise<AIMessageRow | null> {
-    // user_id is optional for AI messages, but we need to handle it
-    return this.create(data as AIMessageInsert);
-  }
-
-  async addUserMessage(conversationId: string, content: string, metadata?: AIMessageRow['metadata']): Promise<AIMessageRow | null> {
+  async addUserMessage(conversationId: string, content: string, userId: string, metadata?: AIMessageRow['context_used']): Promise<AIMessageRow | null> {
     return this.create({
       conversation_id: conversationId,
-      role: 'user',
+      user_id: userId,
+      sender: 'user',
       content,
-      metadata: metadata ?? {},
+      context_used: metadata ?? {},
     } as AIMessageInsert);
   }
 
-  async addAssistantMessage(conversationId: string, content: string, metadata?: AIMessageRow['metadata']): Promise<AIMessageRow | null> {
+  async addAssistantMessage(conversationId: string, content: string, userId: string, metadata?: AIMessageRow['context_used']): Promise<AIMessageRow | null> {
     return this.create({
       conversation_id: conversationId,
-      role: 'assistant',
+      user_id: userId,
+      sender: 'assistant',
       content,
-      metadata: metadata ?? {},
+      context_used: metadata ?? {},
     } as AIMessageInsert);
   }
 

@@ -1,5 +1,5 @@
 /**
- * AI Provider Factory - Manages provider selection and fallback
+ * AI Provider Factory - Manages provider selection, fallback, and connection verification
  */
 
 import {
@@ -18,17 +18,105 @@ import { MockAIProvider, mockAIProvider } from './mockProvider';
 import { OpenAIProvider } from './openaiProvider';
 import { AnthropicProvider } from './anthropicProvider';
 
+export interface ProviderStatus {
+  name: AIProvider;
+  isConfigured: boolean;
+  isReachable: boolean;
+  lastChecked: number | null;
+  error: string | null;
+}
+
 export class AIProviderFactory {
   private providers: Map<AIProvider, AIProviderInterface> = new Map();
   private defaultProvider: AIProvider = 'mock';
   private initialized = false;
+  private providerStatuses: Map<AIProvider, ProviderStatus> = new Map();
+  private connectionCheckCache: Map<AIProvider, { reachable: boolean; timestamp: number }> = new Map();
+  private readonly CONNECTION_CHECK_TTL = 60000; // 1 minute cache
 
   constructor() {
     this.registerProvider('mock', mockAIProvider);
+    this.updateProviderStatus('mock', { isConfigured: true, isReachable: true, lastChecked: Date.now(), error: null });
   }
 
   registerProvider(name: AIProvider, provider: AIProviderInterface): void {
     this.providers.set(name, provider);
+    const envKey = `${name.toUpperCase()}_API_KEY`;
+    const isConfigured = name !== 'mock' && (!!process.env[envKey] || provider.isAvailable);
+    this.updateProviderStatus(name, {
+      isConfigured,
+      isReachable: name === 'mock' || provider.isAvailable,
+      lastChecked: name === 'mock' ? Date.now() : null,
+      error: null,
+    });
+  }
+
+  private updateProviderStatus(name: AIProvider, status: Partial<ProviderStatus>): void {
+    const existing = this.providerStatuses.get(name) || {
+      name,
+      isConfigured: false,
+      isReachable: false,
+      lastChecked: null,
+      error: null,
+    };
+    this.providerStatuses.set(name, { ...existing, ...status });
+  }
+
+  async verifyConnection(providerName: AIProvider): Promise<ProviderStatus> {
+    const cached = this.connectionCheckCache.get(providerName);
+    if (cached && Date.now() - cached.timestamp < this.CONNECTION_CHECK_TTL) {
+      const status = this.providerStatuses.get(providerName)!;
+      return { ...status, isReachable: cached.reachable };
+    }
+
+    const provider = this.providers.get(providerName);
+    if (!provider) {
+      const status = { name: providerName, isConfigured: false, isReachable: false, lastChecked: Date.now(), error: 'Provider not registered' };
+      this.updateProviderStatus(providerName, status);
+      return status;
+    }
+
+    if (providerName === 'mock') {
+      const status = { name: 'mock' as AIProvider, isConfigured: true, isReachable: true, lastChecked: Date.now(), error: null };
+      this.updateProviderStatus('mock', status);
+      this.connectionCheckCache.set('mock', { reachable: true, timestamp: Date.now() });
+      return status;
+    }
+
+    if (!provider.isAvailable) {
+      const status = { name: providerName, isConfigured: true, isReachable: false, lastChecked: Date.now(), error: 'API key not configured' };
+      this.updateProviderStatus(providerName, status);
+      this.connectionCheckCache.set(providerName, { reachable: false, timestamp: Date.now() });
+      return status as ProviderStatus;
+    }
+
+    try {
+      // Send a minimal test request to verify connectivity
+      const testMessages: AIMessage[] = [{ role: 'user', content: 'ping' }];
+      await Promise.race([
+        provider.complete(testMessages, { maxTokens: 5, temperature: 0 }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000)),
+      ]);
+
+      const status = { name: providerName, isConfigured: true, isReachable: true, lastChecked: Date.now(), error: null };
+      this.updateProviderStatus(providerName, status);
+      this.connectionCheckCache.set(providerName, { reachable: true, timestamp: Date.now() });
+      return status;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Connection failed';
+      const status = { name: providerName, isConfigured: true, isReachable: false, lastChecked: Date.now(), error: errorMessage };
+      this.updateProviderStatus(providerName, status);
+      this.connectionCheckCache.set(providerName, { reachable: false, timestamp: Date.now() });
+      return status as ProviderStatus;
+    }
+  }
+
+  getProviderStatus(providerName: AIProvider): ProviderStatus | null {
+    return this.providerStatuses.get(providerName) ?? null;
+  }
+
+  getAllProviderStatuses(): ProviderStatus[] {
+    return Array.from(this.providerStatuses.values());
   }
 
   initialize(config: {

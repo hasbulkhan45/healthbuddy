@@ -2,8 +2,8 @@
  * AI Chat Service - Conversational health assistant
  */
 
-import { aiProviderFactory, aiMessagesRepository, aiConversationsRepository } from '@/lib/ai';
-import { profilesRepository } from '@/services/repositories';
+import { aiProviderFactory } from '@/lib/ai';
+import { profilesRepository, aiMessagesRepository, aiConversationsRepository } from '@/services/repositories';
 import type {
   AIMessage,
   AICompletionOptions,
@@ -64,7 +64,7 @@ export class AIChatService {
     // Build messages for AI
     const messages: AIMessage[] = [
       { role: 'system', content: `${SYSTEM_PROMPT}\n\nUser Context:\n${context}` },
-      ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       { role: 'user', content },
     ];
 
@@ -123,7 +123,7 @@ export class AIChatService {
 
     const messages: AIMessage[] = [
       { role: 'system', content: `${SYSTEM_PROMPT}\n\nUser Context:\n${context}` },
-      ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       { role: 'user', content },
     ];
 
@@ -155,7 +155,7 @@ export class AIChatService {
 
   async getConversationHistory(conversationId: string, limit = 50): Promise<AIMessage[]> {
     const messages = await aiMessagesRepository.findByConversation(conversationId, limit);
-    return messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    return messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
   }
 
   async getUserConversations(userId: string) {
